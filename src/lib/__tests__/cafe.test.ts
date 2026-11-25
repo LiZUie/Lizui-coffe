@@ -169,7 +169,10 @@ describe("Cafe POS & Ordering Domain", () => {
   });
 
   it("validates preset and uploaded menu image paths safely", () => {
-    expect(resolveMenuImageSrc("americano")).toBe("/images/menu/americano.jpg");
+    expect(resolveMenuImageSrc("iced-latte")).toBe("/images/menu/iced-latte.jpg");
+    expect(resolveMenuImageSrc("iced-latte", "Panas")).toBe("/images/menu/iced-latte-hot.jpg");
+    expect(resolveMenuImageSrc("coffee-latte", "Panas")).toBe("/images/menu/coffee-latte-hot.jpg");
+    expect(resolveMenuImageSrc("americano", "Ice")).toBe("/images/menu/americano.jpg");
     expect(resolveMenuImageSrc("/api/menu/image/123e4567-e89b-12d3-a456-426614174000.png")).toBe(
       "/api/menu/image/123e4567-e89b-12d3-a456-426614174000.png",
     );

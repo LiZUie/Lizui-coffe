@@ -173,7 +173,7 @@ export function CartPanel({
                 key={entry.key}
                 className="flex items-center gap-3 rounded-xl border border-[#EFEAE4] bg-[#FAF7F4] p-2.5"
               >
-                <MenuVisual visualKey={entry.visualKey} size={48} />
+                <MenuVisual visualKey={entry.visualKey} temperature={entry.temperature} size={48} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-bold text-[#1F1B18]">{entry.itemName}</p>
                   <p className="text-xs text-[#5E5650]">

@@ -1,3 +1,5 @@
+import type { DrinkTemperature } from "./types";
+
 export interface MenuImagePreset {
   key: string;
   label: string;
@@ -18,6 +20,7 @@ export const MENU_IMAGE_PRESETS: MenuImagePreset[] = [
 ];
 
 const PRESET_SET = new Set(MENU_IMAGE_PRESETS.map((p) => p.key));
+const HOT_COFFEE_KEYS = new Set(["iced-latte", "coffee-latte"]);
 const UPLOADED_PATH_RE = /^\/api\/menu\/image\/[a-f0-9-]+\.(jpg|png|webp)$/;
 
 export function isPresetMenuKey(value: string): boolean {
@@ -28,10 +31,13 @@ export function isSafeUploadedMenuPath(value: string): boolean {
   return UPLOADED_PATH_RE.test(value);
 }
 
-export function resolveMenuImageSrc(visualKey: string): string {
+export function resolveMenuImageSrc(visualKey: string, temperature?: DrinkTemperature): string {
   if (isSafeUploadedMenuPath(visualKey)) return visualKey;
+  if (temperature === "Panas" && HOT_COFFEE_KEYS.has(visualKey)) {
+    return `/images/menu/${visualKey}-hot.jpg`;
+  }
   if (isPresetMenuKey(visualKey)) return `/images/menu/${visualKey}.jpg`;
-  return "/images/menu/iced-latte.jpg";
+  return temperature === "Panas" ? "/images/menu/iced-latte-hot.jpg" : "/images/menu/iced-latte.jpg";
 }
 
 export function detectImageExtension(bytes: Uint8Array): "jpg" | "png" | "webp" | null {

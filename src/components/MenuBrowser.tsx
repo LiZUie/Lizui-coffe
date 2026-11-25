@@ -153,6 +153,13 @@ export function MenuBrowser({
             const qty = cardQty[item.id] ?? 1;
             const cartKey = buildCartKey(item.id, configured.variantLabel, currentTemp, currentSugar);
             const inCartQty = cartQuantities[cartKey] ?? 0;
+            const sizeScale = isDrink
+              ? configured.variantLabel.toLowerCase().includes("large")
+                ? "large"
+                : configured.variantLabel.toLowerCase().includes("small")
+                  ? "small"
+                  : "normal"
+              : "normal";
 
             return (
               <article
@@ -162,7 +169,12 @@ export function MenuBrowser({
                 }`}
               >
                 <div className="flex gap-3.5">
-                  <MenuVisual visualKey={item.visualKey} size={88} />
+                  <MenuVisual
+                    visualKey={item.visualKey}
+                    temperature={currentTemp}
+                    sizeScale={sizeScale}
+                    size={88}
+                  />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
                       <h3 className="text-base font-bold text-[#1F1B18]">{item.name}</h3>
@@ -201,7 +213,7 @@ export function MenuBrowser({
 
                       {isCoffee ? (
                         <div className="flex flex-wrap items-center gap-1.5">
-                          <span className="mr-0.5 text-[11px] font-semibold text-[#5E5650]">Suhu:</span>
+                          <span className="mr-0.5 text-[11px] font-semibold text-[#5E5650]">Sajian:</span>
                           {COFFEE_TEMPERATURES.map((temp) => {
                             const isPicked = currentTemp === temp;
                             return (
