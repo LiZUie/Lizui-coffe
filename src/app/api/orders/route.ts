@@ -1,0 +1,65 @@
+import { NextResponse } from "next/server";
+import { createOrder, getOrderById, listOrders } from "@/lib/db";
+import { getStaffSessionRole, hasRoleAccess } from "@/lib/auth";
+import type { OrderSource, OrderType, PaymentMethod } from "@/lib/types";
+
+export async function GET(req: Request) {
+  const url = new URL(req.url);
+  const idsParam = url.searchParams.get("ids");
+  const role = await getStaffSessionRole();
+
+  if (idsParam) {
+    const ids = idsParam
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .slice(0, 30);
+    const orders = ids.map((id) => getOrderById(id)).filter((o): o is NonNullable<typeof o> => Boolean(o));
+    return NextResponse.json({ orders });
+  }
+
+  if (!hasRoleAccess(role, "CASHIER")) {
+    return NextResponse.json({ error: "Login staf diperlukan untuk melihat semua antrean" }, { status: 403 });
+  }
+
+  return NextResponse.json({ orders: listOrders(150) });
+}
+
+export async function POST(req: Request) {
+  try {
+    const body = (await req.json()) as {
+      source?: OrderSource;
+      type?: OrderType;
+      tableCode?: string | null;
+      customerName?: string;
+      notes?: string;
+      paymentMethod?: PaymentMethod;
+      cashReceived?: number;
+      discount?: number;
+      items?: Array<{ menuItemId: string; variantLabel: string; quantity: number }>;
+    };
+
+    const requestedSource: OrderSource = body.source === "CASHIER" ? "CASHIER" : "CUSTOMER";
+    const role = await getStaffSessionRole();
+    if (requestedSource === "CASHIER" && !hasRoleAccess(role, "CASHIER")) {
+      return NextResponse.json({ error: "Login kasir diperlukan" }, { status: 403 });
+    }
+
+    const order = createOrder({
+      source: requestedSource,
+      type: body.type === "TAKE_AWAY" ? "TAKE_AWAY" : "DINE_IN",
+      tableCode: body.tableCode ?? null,
+      customerName: body.customerName,
+      notes: body.notes,
+      paymentMethod: body.paymentMethod === "CASH" ? "CASH" : "QRIS",
+      cashReceived: requestedSource === "CASHIER" ? body.cashReceived : undefined,
+      markPaid: requestedSource === "CASHIER",
+      discount: requestedSource === "CASHIER" ? body.discount : 0,
+      items: body.items ?? [],
+    });
+
+    return NextResponse.json({ order }, { status: 201 });
+  } catch (err) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Gagal membuat pesanan" }, { status: 400 });
+  }
+}

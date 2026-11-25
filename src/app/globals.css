@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+:root {
+  --bg-canvas: #FAF7F4;
+  --bg-surface: #FFFFFF;
+  --bg-subtle: #F3EEE9;
+  --border-hairline: #DDD5CD;
+  --ink-primary: #1F1B18;
+  --ink-muted: #5E5650;
+  --accent-primary: #B8551E;
+  --accent-primary-hover: #9E4616;
+  --accent-peach: #F3B68D;
+  --accent-espresso: #231F1D;
+  --status-ok-bg: #ECFDF3;
+  --status-ok-ink: #166534;
+  --status-warn-bg: #FFF1EB;
+  --status-warn-ink: #B93815;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  background-color: var(--bg-canvas);
+  color: var(--ink-primary);
+  overflow-x: clip;
+  margin: 0;
+  padding: 0;
+}
+
+a[href],
+button:not(:disabled),
+summary,
+select:not(:disabled),
+input[type="checkbox"]:not(:disabled),
+input[type="radio"]:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+[role="tab"]:not([aria-disabled="true"]) {
+  cursor: pointer;
+}
+
+button:disabled,
+select:disabled,
+input:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media print {
+  body {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-full {
+    width: 100% !important;
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+}
