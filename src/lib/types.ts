@@ -1,4 +1,6 @@
 export type MenuCategory = "COFFEE" | "NON_COFFEE" | "FOOD" | "SNACK" | "DESSERT";
+export type SugarLevel = "Dikit" | "Normal" | "Banyak";
+export type DrinkTemperature = "Panas" | "Ice";
 
 export type OrderSource = "CUSTOMER" | "CASHIER";
 export type OrderType = "DINE_IN" | "TAKE_AWAY";

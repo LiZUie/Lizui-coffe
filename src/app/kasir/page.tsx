@@ -5,6 +5,7 @@ import { AppShell } from "@/components/AppShell";
 import { CartPanel, type CartEntry } from "@/components/CartPanel";
 import { MenuBrowser, type CartSelection } from "@/components/MenuBrowser";
 import { PinGate } from "@/components/PinGate";
+import { mergeCartSelection, updateCartQuantity } from "@/lib/drink-options";
 import { formatDateTimeShort, formatRupiah, ORDER_STATUS_LABELS } from "@/lib/format";
 import type {
   CafeTable,
@@ -141,34 +142,12 @@ export default function CashierPage() {
   }, [cart]);
 
   function handleAddToCart(selection: CartSelection) {
-    const key = `${selection.menuItem.id}::${selection.variantLabel}`;
-    setCart((prev) => {
-      const existing = prev.find((e) => e.key === key);
-      if (existing) {
-        return prev.map((e) => (e.key === key ? { ...e, quantity: e.quantity + selection.quantity } : e));
-      }
-      return [
-        ...prev,
-        {
-          key,
-          menuItemId: selection.menuItem.id,
-          itemName: selection.menuItem.name,
-          visualKey: selection.menuItem.visualKey,
-          variantLabel: selection.variantLabel,
-          unitPrice: selection.unitPrice,
-          quantity: selection.quantity,
-        },
-      ];
-    });
+    setCart((prev) => mergeCartSelection(prev, selection));
     setSubmitError(null);
   }
 
   function handleUpdateQty(key: string, delta: number) {
-    setCart((prev) =>
-      prev
-        .map((e) => (e.key === key ? { ...e, quantity: e.quantity + delta } : e))
-        .filter((e) => e.quantity > 0),
-    );
+    setCart((prev) => updateCartQuantity(prev, key, delta));
   }
 
   async function handleSubmitCashierOrder() {
@@ -192,7 +171,9 @@ export default function CashierPage() {
           cashReceived: paymentMethod === "CASH" ? cashReceived || total : undefined,
           items: cart.map((c) => ({
             menuItemId: c.menuItemId,
-            variantLabel: c.variantLabel,
+            variantLabel: c.baseVariantLabel,
+            temperature: c.temperature,
+            sugarLevel: c.sugarLevel,
             quantity: c.quantity,
           })),
         }),

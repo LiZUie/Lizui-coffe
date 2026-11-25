@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createOrder, getOrderById, listOrders } from "@/lib/db";
 import { getStaffSessionRole, hasRoleAccess } from "@/lib/auth";
-import type { OrderSource, OrderType, PaymentMethod } from "@/lib/types";
+import type { DrinkTemperature, OrderSource, OrderType, PaymentMethod, SugarLevel } from "@/lib/types";
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
@@ -36,7 +36,13 @@ export async function POST(req: Request) {
       paymentMethod?: PaymentMethod;
       cashReceived?: number;
       discount?: number;
-      items?: Array<{ menuItemId: string; variantLabel: string; quantity: number }>;
+      items?: Array<{
+        menuItemId: string;
+        variantLabel: string;
+        temperature?: DrinkTemperature;
+        sugarLevel?: SugarLevel;
+        quantity: number;
+      }>;
     };
 
     const requestedSource: OrderSource = body.source === "CASHIER" ? "CASHIER" : "CUSTOMER";

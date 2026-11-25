@@ -122,6 +122,52 @@ describe("Cafe POS & Ordering Domain", () => {
     expect(hasRoleAccess(verifyStaffToken(managerToken), "MANAGER")).toBe(true);
   });
 
+  it("applies extra sugar fee on drinks except tea and supports coffee temperature options", () => {
+    const coffeeOrder = createOrder({
+      source: "CUSTOMER",
+      type: "DINE_IN",
+      tableCode: "M04",
+      paymentMethod: "QRIS",
+      items: [
+        {
+          menuItemId: "menu-cappucino",
+          variantLabel: "Large",
+          temperature: "Panas",
+          sugarLevel: "Banyak",
+          quantity: 1,
+        },
+      ],
+    });
+    // Base 28000 + Large 6000 + Gula Banyak 2000 = 36000
+    expect(coffeeOrder.total).toBe(36000);
+    expect(coffeeOrder.items[0]?.variantLabel).toBe("Large • Panas • Gula Banyak");
+
+    const teaMenu = createMenuItem({
+      name: "Es Teh Leci",
+      category: "NON_COFFEE",
+      description: "Teh melati dingin dengan buah leci.",
+      price: 22000,
+    });
+    expect(teaMenu.variants.map((v) => v.label)).toEqual(["Small", "Large"]);
+
+    const teaOrder = createOrder({
+      source: "CUSTOMER",
+      type: "TAKE_AWAY",
+      paymentMethod: "CASH",
+      items: [
+        {
+          menuItemId: teaMenu.id,
+          variantLabel: "Large",
+          sugarLevel: "Banyak",
+          quantity: 1,
+        },
+      ],
+    });
+    // Tea is exempt from extra sugar fee: Base 22000 + Large 6000 + 0 = 28000
+    expect(teaOrder.total).toBe(28000);
+    expect(teaOrder.items[0]?.variantLabel).toBe("Large • Gula Banyak");
+  });
+
   it("validates preset and uploaded menu image paths safely", () => {
     expect(resolveMenuImageSrc("americano")).toBe("/images/menu/americano.jpg");
     expect(resolveMenuImageSrc("/api/menu/image/123e4567-e89b-12d3-a456-426614174000.png")).toBe(

@@ -2,8 +2,10 @@ import { DatabaseSync } from "node:sqlite";
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
+import { computeConfiguredUnitPrice, isDrinkCategory } from "./drink-options";
 import type {
   CafeTable,
+  DrinkTemperature,
   MenuCategory,
   MenuItem,
   MenuVariant,
@@ -14,6 +16,7 @@ import type {
   OrderType,
   PaymentMethod,
   PaymentStatus,
+  SugarLevel,
   TableStatus,
 } from "./types";
 
@@ -101,6 +104,15 @@ export function getDb(): DatabaseSync {
   `);
 
   seedIfEmpty(db);
+  // Normalize legacy V60 Hot/Iced variants to Small/Large now that Coffee has its own temperature selector.
+  db.prepare(
+    `UPDATE menu_items SET variants_json = ? WHERE id = 'menu-v60' AND variants_json LIKE '%"Hot"%'`,
+  ).run(
+    JSON.stringify([
+      { label: "Small", priceDelta: 0 },
+      { label: "Large", priceDelta: 6000 },
+    ]),
+  );
 
   cachedDb = db;
   cachedDbPath = dbPath;
@@ -156,8 +168,8 @@ function seedIfEmpty(db: DatabaseSync): void {
         price: 32000,
         visualKey: "v60",
         variants: [
-          { label: "Hot", priceDelta: 0 },
-          { label: "Iced", priceDelta: 3000 },
+          { label: "Small", priceDelta: 0 },
+          { label: "Large", priceDelta: 6000 },
         ],
       },
       {
@@ -482,7 +494,14 @@ export function createMenuItem(input: {
 
   const id = `menu-${crypto.randomUUID().slice(0, 8)}`;
   const now = new Date().toISOString();
-  const variants = input.variants?.length ? input.variants : [{ label: "Regular", priceDelta: 0 }];
+  const variants = input.variants?.length
+    ? input.variants
+    : isDrinkCategory(input.category)
+      ? [
+          { label: "Small", priceDelta: 0 },
+          { label: "Large", priceDelta: 6000 },
+        ]
+      : [{ label: "Regular", priceDelta: 0 }];
   const visualKey = input.visualKey || "iced-latte";
 
   db.prepare(`
@@ -609,6 +628,8 @@ export interface CreateOrderInput {
   items: Array<{
     menuItemId: string;
     variantLabel: string;
+    temperature?: DrinkTemperature;
+    sugarLevel?: SugarLevel;
     quantity: number;
   }>;
 }
@@ -647,15 +668,18 @@ export function createOrder(input: CreateOrderInput): Order {
     if (!menu.isAvailable) {
       throw new Error(`Menu ${menu.name} sedang habis`);
     }
-    const variant = menu.variants.find((v) => v.label === reqItem.variantLabel) ?? menu.variants[0];
-    const unitPrice = menu.price + (variant?.priceDelta ?? 0);
+    const configured = computeConfiguredUnitPrice(menu, {
+      variantLabel: reqItem.variantLabel,
+      temperature: reqItem.temperature,
+      sugarLevel: reqItem.sugarLevel,
+    });
     resolvedItems.push({
       menuItemId: menu.id,
       itemName: menu.name,
-      variantLabel: variant?.label ?? "Regular",
+      variantLabel: configured.displayVariant,
       quantity: reqItem.quantity,
-      unitPrice,
-      lineTotal: unitPrice * reqItem.quantity,
+      unitPrice: configured.unitPrice,
+      lineTotal: configured.unitPrice * reqItem.quantity,
     });
   }
 

@@ -1,16 +1,21 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import {
+  buildCartKey,
+  COFFEE_TEMPERATURES,
+  computeConfiguredUnitPrice,
+  getSugarExtraPrice,
+  isCoffeeCategory,
+  isDrinkCategory,
+  type SharedCartSelection,
+  SUGAR_LEVELS,
+} from "@/lib/drink-options";
 import { CATEGORY_LABELS, formatRupiah } from "@/lib/format";
-import type { MenuCategory, MenuItem } from "@/lib/types";
+import type { DrinkTemperature, MenuCategory, MenuItem, SugarLevel } from "@/lib/types";
 import { MenuVisual } from "./MenuVisual";
 
-export interface CartSelection {
-  menuItem: MenuItem;
-  variantLabel: string;
-  unitPrice: number;
-  quantity: number;
-}
+export type CartSelection = SharedCartSelection;
 
 interface MenuBrowserProps {
   items: MenuItem[];
@@ -41,6 +46,8 @@ export function MenuBrowser({
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<"ALL" | MenuCategory>("ALL");
   const [selectedVariant, setSelectedVariant] = useState<Record<string, string>>({});
+  const [selectedTemp, setSelectedTemp] = useState<Record<string, DrinkTemperature>>({});
+  const [selectedSugar, setSelectedSugar] = useState<Record<string, SugarLevel>>({});
   const [cardQty, setCardQty] = useState<Record<string, number>>({});
 
   const filtered = useMemo(() => {
@@ -110,7 +117,7 @@ export function MenuBrowser({
         </div>
       ) : filtered.length === 0 ? (
         <div className="rounded-2xl border border-[#DDD5CD] bg-[#FFFFFF] p-8 text-center">
-          <p className="text-base font-semibold text-[#1F1B18]">Menu tidak ditemukan</p>
+          <p className="text-base font-bold text-[#1F1B18]">Menu tidak ditemukan</p>
           <p className="mt-1 text-sm text-[#5E5650]">Coba ubah kata kunci pencarian atau pilih kategori lain.</p>
           {query || activeCategory !== "ALL" ? (
             <button
@@ -128,12 +135,24 @@ export function MenuBrowser({
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {filtered.map((item) => {
+            const isDrink = isDrinkCategory(item.category);
+            const isCoffee = isCoffeeCategory(item.category);
             const currentVariantLabel = selectedVariant[item.id] ?? item.variants[0]?.label ?? "Regular";
-            const currentVariant =
-              item.variants.find((v) => v.label === currentVariantLabel) ?? item.variants[0];
-            const unitPrice = item.price + (currentVariant?.priceDelta ?? 0);
+            const currentTemp: DrinkTemperature | undefined = isCoffee
+              ? selectedTemp[item.id] ?? "Ice"
+              : undefined;
+            const currentSugar: SugarLevel | undefined = isDrink
+              ? selectedSugar[item.id] ?? "Normal"
+              : undefined;
+
+            const configured = computeConfiguredUnitPrice(item, {
+              variantLabel: currentVariantLabel,
+              temperature: currentTemp,
+              sugarLevel: currentSugar,
+            });
             const qty = cardQty[item.id] ?? 1;
-            const inCartQty = cartQuantities[`${item.id}::${currentVariantLabel}`] ?? 0;
+            const cartKey = buildCartKey(item.id, configured.variantLabel, currentTemp, currentSugar);
+            const inCartQty = cartQuantities[cartKey] ?? 0;
 
             return (
               <article
@@ -148,35 +167,87 @@ export function MenuBrowser({
                     <div className="flex items-start justify-between gap-2">
                       <h3 className="text-base font-bold text-[#1F1B18]">{item.name}</h3>
                       <span className="shrink-0 text-sm font-bold text-[#B8551E] tabular-nums">
-                        {formatRupiah(unitPrice)}
+                        {formatRupiah(configured.unitPrice)}
                       </span>
                     </div>
                     <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-[#5E5650]">
                       {item.description}
                     </p>
 
-                    <div className="mt-3 flex flex-wrap items-center gap-1.5">
-                      {item.variants.map((variant) => {
-                        const isPicked = variant.label === currentVariantLabel;
-                        return (
-                          <button
-                            key={variant.label}
-                            type="button"
-                            disabled={!item.isAvailable}
-                            onClick={() =>
-                              setSelectedVariant((prev) => ({ ...prev, [item.id]: variant.label }))
-                            }
-                            className={`min-h-[36px] rounded-full border px-3 text-xs font-semibold transition-colors ${
-                              isPicked
-                                ? "border-[#231F1D] bg-[#231F1D] text-[#FFFFFF]"
-                                : "border-[#DDD5CD] bg-[#FAF7F4] text-[#1F1B18] hover:bg-[#F3EEE9]"
-                            }`}
-                          >
-                            {variant.label}
-                            {variant.priceDelta > 0 ? ` (+${Math.round(variant.priceDelta / 1000)}rb)` : ""}
-                          </button>
-                        );
-                      })}
+                    <div className="mt-3 space-y-2">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {item.variants.map((variant) => {
+                          const isPicked = variant.label === configured.variantLabel;
+                          return (
+                            <button
+                              key={variant.label}
+                              type="button"
+                              disabled={!item.isAvailable}
+                              onClick={() =>
+                                setSelectedVariant((prev) => ({ ...prev, [item.id]: variant.label }))
+                              }
+                              className={`min-h-[34px] rounded-full border px-3 text-xs font-semibold transition-colors ${
+                                isPicked
+                                  ? "border-[#231F1D] bg-[#231F1D] text-[#FFFFFF]"
+                                  : "border-[#DDD5CD] bg-[#FAF7F4] text-[#1F1B18] hover:bg-[#F3EEE9]"
+                              }`}
+                            >
+                              {variant.label}
+                              {variant.priceDelta > 0 ? ` (+${Math.round(variant.priceDelta / 1000)}rb)` : ""}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {isCoffee ? (
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="mr-0.5 text-[11px] font-semibold text-[#5E5650]">Suhu:</span>
+                          {COFFEE_TEMPERATURES.map((temp) => {
+                            const isPicked = currentTemp === temp;
+                            return (
+                              <button
+                                key={temp}
+                                type="button"
+                                disabled={!item.isAvailable}
+                                onClick={() => setSelectedTemp((prev) => ({ ...prev, [item.id]: temp }))}
+                                className={`min-h-[32px] rounded-full border px-2.5 text-xs font-semibold transition-colors ${
+                                  isPicked
+                                    ? "border-[#231F1D] bg-[#231F1D] text-[#FFFFFF]"
+                                    : "border-[#DDD5CD] bg-[#FAF7F4] text-[#1F1B18] hover:bg-[#F3EEE9]"
+                                }`}
+                              >
+                                {temp}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : null}
+
+                      {isDrink ? (
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="mr-0.5 text-[11px] font-semibold text-[#5E5650]">Gula:</span>
+                          {SUGAR_LEVELS.map((sugar) => {
+                            const isPicked = currentSugar === sugar;
+                            const extra = getSugarExtraPrice(item, sugar);
+                            return (
+                              <button
+                                key={sugar}
+                                type="button"
+                                disabled={!item.isAvailable}
+                                onClick={() => setSelectedSugar((prev) => ({ ...prev, [item.id]: sugar }))}
+                                className={`min-h-[32px] rounded-full border px-2.5 text-xs font-semibold transition-colors ${
+                                  isPicked
+                                    ? "border-[#B8551E] bg-[#F3B68D] text-[#1F1B18]"
+                                    : "border-[#DDD5CD] bg-[#FAF7F4] text-[#1F1B18] hover:bg-[#F3EEE9]"
+                                }`}
+                              >
+                                {sugar}
+                                {extra > 0 ? ` (+${Math.round(extra / 1000)}rb)` : ""}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : null}
                     </div>
                   </div>
                 </div>
@@ -216,8 +287,11 @@ export function MenuBrowser({
                       onClick={() => {
                         onAdd({
                           menuItem: item,
-                          variantLabel: currentVariantLabel,
-                          unitPrice,
+                          variantLabel: configured.variantLabel,
+                          temperature: configured.temperature,
+                          sugarLevel: configured.sugarLevel,
+                          unitPrice: configured.unitPrice,
+                          displayVariant: configured.displayVariant,
                           quantity: qty,
                         });
                         setCardQty((prev) => ({ ...prev, [item.id]: 1 }));

@@ -1,19 +1,12 @@
 "use client";
 
 import React from "react";
+import type { SharedCartEntry } from "@/lib/drink-options";
 import { formatRupiah } from "@/lib/format";
 import type { CafeTable, OrderType, PaymentMethod } from "@/lib/types";
 import { MenuVisual } from "./MenuVisual";
 
-export interface CartEntry {
-  key: string;
-  menuItemId: string;
-  itemName: string;
-  visualKey: string;
-  variantLabel: string;
-  unitPrice: number;
-  quantity: number;
-}
+export type CartEntry = SharedCartEntry;
 
 interface CartPanelProps {
   mode: "CUSTOMER" | "CASHIER";
