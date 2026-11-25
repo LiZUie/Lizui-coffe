@@ -1,4 +1,5 @@
 import React from "react";
+import { resolveMenuImageSrc } from "@/lib/menu-images";
 
 interface MenuVisualProps {
   visualKey: string;
@@ -6,26 +7,11 @@ interface MenuVisualProps {
   size?: number;
 }
 
-const VALID_KEYS = new Set([
-  "iced-latte",
-  "coffee-latte",
-  "americano",
-  "v60",
-  "matcha",
-  "chocolate",
-  "rice-bowl",
-  "pasta",
-  "fries",
-  "croissant",
-  "cake",
-]);
-
 export function MenuVisual({ visualKey, alt = "", size = 80 }: MenuVisualProps) {
-  const safeKey = VALID_KEYS.has(visualKey) ? visualKey : "iced-latte";
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={`/images/menu/${safeKey}.jpg`}
+      src={resolveMenuImageSrc(visualKey)}
       alt={alt}
       width={size}
       height={size}

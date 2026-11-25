@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
+import { MenuVisual } from "@/components/MenuVisual";
 import { PinGate } from "@/components/PinGate";
 import { CATEGORY_LABELS, formatDateTimeShort, formatRupiah } from "@/lib/format";
+import { MENU_IMAGE_PRESETS } from "@/lib/menu-images";
 import type { AnalyticsSummary, MenuCategory, MenuItem, StaffRole, TrendPoint } from "@/lib/types";
 
 function RevenueTrendChart({ trend }: { trend: TrendPoint[] }) {
@@ -116,8 +118,12 @@ export default function ManagerDashboardPage() {
   const [newCategory, setNewCategory] = useState<MenuCategory>("COFFEE");
   const [newPrice, setNewPrice] = useState("");
   const [newDesc, setNewDesc] = useState("");
+  const [newVisualKey, setNewVisualKey] = useState("iced-latte");
+  const [newImageFile, setNewImageFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [savingMenu, setSavingMenu] = useState(false);
-  const [menuMsg, setMenuMsg] = useState<string | null>(null);
+  const [menuMsg, setMenuMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
   const loadAnalytics = useCallback(async (selectedPeriod: "today" | "7d" | "30d") => {
     setLoading(true);
@@ -190,30 +196,49 @@ export default function ManagerDashboardPage() {
     };
   }, [role, period]);
 
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
+  function handleSelectImageFile(file: File | null) {
+    setNewImageFile(file);
+    setPreviewUrl(file ? URL.createObjectURL(file) : null);
+    if (!file && fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }
+
   async function handleAddMenu(e: React.FormEvent) {
     e.preventDefault();
     setSavingMenu(true);
     setMenuMsg(null);
     try {
+      const form = new FormData();
+      form.append("name", newName);
+      form.append("category", newCategory);
+      form.append("price", newPrice);
+      form.append("description", newDesc);
+      form.append("visualKey", newVisualKey);
+      if (newImageFile) {
+        form.append("image", newImageFile);
+      }
       const res = await fetch("/api/menu", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: newName,
-          category: newCategory,
-          price: Number(newPrice),
-          description: newDesc,
-        }),
+        body: form,
       });
       const data = (await res.json()) as { error?: string };
       if (!res.ok) {
-        setMenuMsg(data.error ?? "Gagal menambah menu.");
+        setMenuMsg({ type: "err", text: data.error ?? "Gagal menambah menu." });
         return;
       }
       setNewName("");
       setNewPrice("");
       setNewDesc("");
-      setMenuMsg("Menu baru berhasil ditambahkan ke katalog.");
+      setNewVisualKey("iced-latte");
+      handleSelectImageFile(null);
+      setMenuMsg({ type: "ok", text: "Menu baru beserta gambar berhasil ditambahkan ke katalog." });
       await loadAnalytics(period);
     } finally {
       setSavingMenu(false);
@@ -569,7 +594,92 @@ export default function ManagerDashboardPage() {
                     className="mt-1 min-h-[44px] w-full rounded-[10px] border border-[#DDD5CD] bg-[#FAF7F4] px-3 text-sm"
                   />
                 </div>
-                {menuMsg ? <p className="text-xs font-semibold text-[#166534]">{menuMsg}</p> : null}
+
+                <div className="space-y-2.5 rounded-xl border border-[#EFEAE4] bg-[#FAF7F4] p-3.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-semibold text-[#1F1B18]">Gambar Menu</span>
+                    {newImageFile ? (
+                      <button
+                        type="button"
+                        onClick={() => handleSelectImageFile(null)}
+                        className="text-xs font-semibold text-[#B93815] underline"
+                      >
+                        Hapus upload, pakai galeri
+                      </button>
+                    ) : null}
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    {previewUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={previewUrl}
+                        alt="Pratinjau gambar menu"
+                        width={64}
+                        height={64}
+                        className="h-16 w-16 shrink-0 rounded-xl border border-[#DDD5CD] object-cover"
+                      />
+                    ) : (
+                      <MenuVisual visualKey={newVisualKey} size={64} />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <label htmlFor="new-menu-file" className="block text-xs font-medium text-[#5E5650]">
+                        Upload foto sendiri (JPG/PNG/WEBP, maks 2 MB)
+                      </label>
+                      <input
+                        ref={fileInputRef}
+                        id="new-menu-file"
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0] ?? null;
+                          handleSelectImageFile(file);
+                        }}
+                        className="mt-1 block w-full text-xs text-[#1F1B18] file:mr-3 file:min-h-[36px] file:rounded-lg file:border file:border-[#DDD5CD] file:bg-[#FFFFFF] file:px-3 file:text-xs file:font-semibold file:text-[#1F1B18]"
+                      />
+                    </div>
+                  </div>
+
+                  {!newImageFile ? (
+                    <div>
+                      <p className="mb-1.5 text-xs text-[#5E5650]">Atau pilih cepat dari foto studio:</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {MENU_IMAGE_PRESETS.map((preset) => {
+                          const selected = newVisualKey === preset.key;
+                          return (
+                            <button
+                              key={preset.key}
+                              type="button"
+                              onClick={() => setNewVisualKey(preset.key)}
+                              aria-pressed={selected}
+                              className={`flex items-center gap-1.5 rounded-lg border p-1 pr-2 text-xs font-semibold transition-colors ${
+                                selected
+                                  ? "border-[#B8551E] bg-[#FFF1EB] text-[#1F1B18]"
+                                  : "border-[#DDD5CD] bg-[#FFFFFF] text-[#5E5650] hover:text-[#1F1B18]"
+                              }`}
+                            >
+                              <MenuVisual visualKey={preset.key} size={26} />
+                              <span>{preset.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+
+                {menuMsg ? (
+                  <p
+                    role={menuMsg.type === "err" ? "alert" : "status"}
+                    className={`rounded-[10px] px-3 py-2 text-xs font-semibold ${
+                      menuMsg.type === "err"
+                        ? "bg-[#FFF1EB] text-[#B93815]"
+                        : "bg-[#ECFDF3] text-[#166534]"
+                    }`}
+                  >
+                    {menuMsg.text}
+                  </p>
+                ) : null}
                 <button
                   type="submit"
                   disabled={savingMenu}
@@ -581,19 +691,22 @@ export default function ManagerDashboardPage() {
 
               <div className="rounded-2xl border border-[#DDD5CD] bg-[#FFFFFF] p-5">
                 <h2 className="text-lg font-bold text-[#1F1B18]">Daftar Katalog Menu ({menuItems.length})</h2>
-                <div className="mt-3 max-h-[320px] divide-y divide-[#F0EAE3] overflow-y-auto pr-1">
+                <div className="mt-3 divide-y divide-[#F0EAE3]">
                   {menuItems.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between py-2.5 text-sm">
-                      <div>
-                        <p className="font-semibold text-[#1F1B18]">{item.name}</p>
-                        <p className="text-xs text-[#5E5650] tabular-nums">
-                          {CATEGORY_LABELS[item.category]} • {formatRupiah(item.price)}
-                        </p>
+                    <div key={item.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <MenuVisual visualKey={item.visualKey} size={44} />
+                        <div className="min-w-0">
+                          <p className="truncate font-semibold text-[#1F1B18]">{item.name}</p>
+                          <p className="text-xs text-[#5E5650] tabular-nums">
+                            {CATEGORY_LABELS[item.category]} • {formatRupiah(item.price)}
+                          </p>
+                        </div>
                       </div>
                       <button
                         type="button"
                         onClick={() => void handleToggleMenu(item.id, !item.isAvailable)}
-                        className={`min-h-[38px] rounded-[10px] px-3 text-xs font-bold ${
+                        className={`min-h-[38px] shrink-0 rounded-[10px] px-3 text-xs font-bold ${
                           item.isAvailable
                             ? "bg-[#ECFDF3] text-[#166534]"
                             : "bg-[#FFF1EB] text-[#B93815]"

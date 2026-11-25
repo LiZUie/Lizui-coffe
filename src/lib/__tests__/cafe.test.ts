@@ -11,6 +11,7 @@ import {
 } from "../db";
 import { buildOrdersCsv, computeAnalytics } from "../analytics";
 import { createStaffToken, hasRoleAccess, verifyPin, verifyStaffToken } from "../auth";
+import { detectImageExtension, resolveMenuImageSrc } from "../menu-images";
 
 beforeEach(() => {
   process.env.KAFE_DB_PATH = ":memory:";
@@ -119,5 +120,17 @@ describe("Cafe POS & Ordering Domain", () => {
     expect(hasRoleAccess(verifyStaffToken(cashierToken), "CASHIER")).toBe(true);
     expect(hasRoleAccess(verifyStaffToken(cashierToken), "MANAGER")).toBe(false);
     expect(hasRoleAccess(verifyStaffToken(managerToken), "MANAGER")).toBe(true);
+  });
+
+  it("validates preset and uploaded menu image paths safely", () => {
+    expect(resolveMenuImageSrc("americano")).toBe("/images/menu/americano.jpg");
+    expect(resolveMenuImageSrc("/api/menu/image/123e4567-e89b-12d3-a456-426614174000.png")).toBe(
+      "/api/menu/image/123e4567-e89b-12d3-a456-426614174000.png",
+    );
+    expect(resolveMenuImageSrc("../secret.txt")).toBe("/images/menu/iced-latte.jpg");
+
+    expect(detectImageExtension(new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0, 0, 0, 0, 0, 0, 0]))).toBe("jpg");
+    expect(detectImageExtension(new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0, 0, 0, 0, 0, 0, 0, 0]))).toBe("png");
+    expect(detectImageExtension(new Uint8Array([0x3c, 0x73, 0x76, 0x67, 0, 0, 0, 0, 0, 0, 0, 0]))).toBeNull();
   });
 });
