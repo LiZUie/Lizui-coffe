@@ -1,13 +1,11 @@
 import type { MenuCategory, OrderStatus } from "./types";
 
-const idrFormatter = new Intl.NumberFormat("id-ID", {
-  style: "currency",
-  currency: "IDR",
-  maximumFractionDigits: 0,
-});
-
 export function formatRupiah(amount: number): string {
-  return idrFormatter.format(Math.round(amount));
+  const n = Math.round(amount);
+  const abs = Math.abs(n)
+    .toString()
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return n < 0 ? `-Rp ${abs}` : `Rp ${abs}`;
 }
 
 export const CATEGORY_LABELS: Record<MenuCategory, string> = {

@@ -12,6 +12,7 @@ import {
 import { buildOrdersCsv, computeAnalytics } from "../analytics";
 import { createStaffToken, hasRoleAccess, verifyPin, verifyStaffToken } from "../auth";
 import { detectImageExtension, resolveMenuImageSrc } from "../menu-images";
+import { formatRupiah } from "../format";
 
 beforeEach(() => {
   process.env.KAFE_DB_PATH = ":memory:";
@@ -186,5 +187,7 @@ describe("Cafe POS & Ordering Domain", () => {
     expect(detectImageExtension(new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0, 0, 0, 0, 0, 0, 0]))).toBe("jpg");
     expect(detectImageExtension(new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0, 0, 0, 0, 0, 0, 0, 0]))).toBe("png");
     expect(detectImageExtension(new Uint8Array([0x3c, 0x73, 0x76, 0x67, 0, 0, 0, 0, 0, 0, 0, 0]))).toBeNull();
+    expect(formatRupiah(0)).toBe("Rp 0");
+    expect(formatRupiah(28000)).toBe("Rp 28.000");
   });
 });
