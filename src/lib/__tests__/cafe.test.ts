@@ -14,7 +14,16 @@ import {
   updateOrderStatus,
 } from "../db";
 import { buildOrdersCsv, computeAnalytics } from "../analytics";
-import { createStaffToken, hasRoleAccess, verifyPin, verifyStaffToken } from "../auth";
+import {
+  checkRateLimit,
+  createStaffToken,
+  hasRoleAccess,
+  resetRateLimitsForTests,
+  SESSION_TTL_MS,
+  verifyPin,
+  verifySameOrigin,
+  verifyStaffToken,
+} from "../auth";
 import { detectImageExtension, resolveMenuImageSrc } from "../menu-images";
 import { formatRupiah } from "../format";
 
@@ -216,7 +225,47 @@ describe("Cafe POS & Ordering Domain", () => {
     expect(rinaLogin?.name).toBe("Rina Shift Pagi");
 
     expect(() => deleteCashierAccount("staff-admin")).toThrow(/utama/i);
+
+    // Token bound to cashier staffId is immediately invalidated once manager deletes the account
+    const rinaToken = createStaffToken("CASHIER", createdCashier.id);
+    expect(verifyStaffToken(rinaToken)).toBe("CASHIER");
     deleteCashierAccount(createdCashier.id);
+    expect(verifyStaffToken(rinaToken)).toBeNull();
     expect(authenticateStaffAccount("rina@lizuicoffee.id", "rinaPassword123", "CASHIER")).toBeNull();
+  });
+
+  it("enforces pentest security controls: token expiry, rate limits, CSRF origin check, and input bounds", () => {
+    resetRateLimitsForTests();
+    const t0 = 1_700_000_000_000;
+    const token = createStaffToken("MANAGER", "staff-admin", t0);
+    expect(verifyStaffToken(token, t0 + 1000)).toBe("MANAGER");
+    expect(verifyStaffToken(token, t0 + SESSION_TTL_MS + 1)).toBeNull();
+
+    for (let i = 0; i < 3; i++) {
+      expect(checkRateLimit("test-ip", 3, 60_000, t0 + i).allowed).toBe(true);
+    }
+    const blocked = checkRateLimit("test-ip", 3, 60_000, t0 + 10);
+    expect(blocked.allowed).toBe(false);
+    expect(blocked.retryAfterSec).toBeGreaterThan(0);
+
+    const sameOriginReq = new Request("http://localhost:3000/api/auth", {
+      method: "POST",
+      headers: { host: "localhost:3000", origin: "http://localhost:3000" },
+    });
+    const crossOriginReq = new Request("http://localhost:3000/api/auth", {
+      method: "POST",
+      headers: { host: "localhost:3000", origin: "https://evil.example.com" },
+    });
+    expect(verifySameOrigin(sameOriginReq)).toBe(true);
+    expect(verifySameOrigin(crossOriginReq)).toBe(false);
+
+    expect(() =>
+      createOrder({
+        source: "CUSTOMER",
+        type: "TAKE_AWAY",
+        paymentMethod: "QRIS",
+        items: [{ menuItemId: "menu-cappucino", variantLabel: "Small", quantity: 999 }],
+      }),
+    ).toThrow(/100/);
   });
 });

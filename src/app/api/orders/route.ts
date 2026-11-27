@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { createOrder, getOrderById, listOrders } from "@/lib/db";
-import { getStaffSessionRole, hasRoleAccess } from "@/lib/auth";
+import {
+  checkRateLimit,
+  getClientIp,
+  getStaffSessionRole,
+  hasRoleAccess,
+  verifySameOrigin,
+} from "@/lib/auth";
 import type { DrinkTemperature, OrderSource, OrderType, PaymentMethod, SugarLevel } from "@/lib/types";
 
 export async function GET(req: Request) {
@@ -26,6 +32,16 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  if (!verifySameOrigin(req)) {
+    return NextResponse.json({ error: "Origin permintaan tidak diizinkan." }, { status: 403 });
+  }
+  const limit = checkRateLimit(`orders:${getClientIp(req)}`, 25, 60_000);
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "Terlalu banyak pesanan dalam waktu singkat. Mohon tunggu sebentar." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfterSec) } },
+    );
+  }
   try {
     const body = (await req.json()) as {
       source?: OrderSource;

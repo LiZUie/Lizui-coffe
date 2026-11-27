@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getStaffSessionRole, hasRoleAccess } from "@/lib/auth";
+import { getStaffSessionRole, hasRoleAccess, verifySameOrigin } from "@/lib/auth";
 import { createCashierAccount, deleteCashierAccount, listStaffAccounts } from "@/lib/db";
 
 export async function GET() {
@@ -11,6 +11,9 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  if (!verifySameOrigin(req)) {
+    return NextResponse.json({ error: "Origin permintaan tidak diizinkan." }, { status: 403 });
+  }
   const role = await getStaffSessionRole();
   if (!hasRoleAccess(role, "MANAGER")) {
     return NextResponse.json({ error: "Hanya Admin/Manajemen yang dapat membuat akun kasir." }, { status: 403 });
@@ -36,6 +39,9 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
+  if (!verifySameOrigin(req)) {
+    return NextResponse.json({ error: "Origin permintaan tidak diizinkan." }, { status: 403 });
+  }
   const role = await getStaffSessionRole();
   if (!hasRoleAccess(role, "MANAGER")) {
     return NextResponse.json({ error: "Hanya Admin/Manajemen yang dapat menghapus akun kasir." }, { status: 403 });

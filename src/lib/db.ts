@@ -536,7 +536,11 @@ export function createMenuItem(input: {
   const db = getDb();
   const name = input.name.trim();
   if (!name) throw new Error("Nama menu wajib diisi");
-  if (!Number.isFinite(input.price) || input.price <= 0) throw new Error("Harga menu harus lebih dari 0");
+  if (name.length > 80) throw new Error("Nama menu maksimal 80 karakter");
+  if (input.description.trim().length > 300) throw new Error("Deskripsi menu maksimal 300 karakter");
+  if (!Number.isFinite(input.price) || input.price <= 0 || input.price > 10_000_000) {
+    throw new Error("Harga menu harus di antara 1 sampai 10.000.000");
+  }
 
   const id = `menu-${crypto.randomUUID().slice(0, 8)}`;
   const now = new Date().toISOString();
@@ -685,6 +689,15 @@ export function createOrder(input: CreateOrderInput): Order {
   if (!input.items || input.items.length === 0) {
     throw new Error("Keranjang pesanan masih kosong");
   }
+  if (input.items.length > 50) {
+    throw new Error("Maksimal 50 jenis item dalam satu pesanan");
+  }
+  if ((input.customerName ?? "").trim().length > 80) {
+    throw new Error("Nama pelanggan maksimal 80 karakter");
+  }
+  if ((input.notes ?? "").trim().length > 250) {
+    throw new Error("Catatan pesanan maksimal 250 karakter");
+  }
 
   const tableCode = input.type === "DINE_IN" ? (input.tableCode ?? "").trim().toUpperCase() : null;
   if (input.type === "DINE_IN") {
@@ -703,8 +716,8 @@ export function createOrder(input: CreateOrderInput): Order {
   }> = [];
 
   for (const reqItem of input.items) {
-    if (!Number.isInteger(reqItem.quantity) || reqItem.quantity <= 0) {
-      throw new Error("Jumlah item harus minimal 1");
+    if (!Number.isInteger(reqItem.quantity) || reqItem.quantity <= 0 || reqItem.quantity > 100) {
+      throw new Error("Jumlah per item harus antara 1 sampai 100");
     }
     const row = db.prepare("SELECT * FROM menu_items WHERE id = ?").get(reqItem.menuItemId) as
       | Record<string, unknown>
@@ -933,8 +946,13 @@ export function createCashierAccount(input: {
   const password = input.password;
 
   if (!name) throw new Error("Nama kasir wajib diisi.");
-  if (username.length < 3) throw new Error("Username atau email kasir minimal 3 karakter.");
-  if (password.length < 6) throw new Error("Password kasir minimal 6 karakter.");
+  if (name.length > 80) throw new Error("Nama kasir maksimal 80 karakter.");
+  if (username.length < 3 || username.length > 100) {
+    throw new Error("Username atau email kasir harus 3–100 karakter.");
+  }
+  if (password.length < 6 || password.length > 128) {
+    throw new Error("Password kasir harus 6–128 karakter.");
+  }
 
   const existing = db
     .prepare("SELECT id FROM staff_users WHERE LOWER(username) = ?")
@@ -960,4 +978,14 @@ export function deleteCashierAccount(id: string): void {
   if (!row) throw new Error("Akun staf tidak ditemukan.");
   if (row.role === "MANAGER") throw new Error("Akun Admin/Manajemen utama tidak dapat dihapus.");
   db.prepare("DELETE FROM staff_users WHERE id = ? AND role = 'CASHIER'").run(id);
+}
+
+export function staffAccountExists(id: string, role?: StaffRole): boolean {
+  const db = getDb();
+  const row = db
+    .prepare("SELECT id, role FROM staff_users WHERE id = ?")
+    .get(id) as { id: string; role: string } | undefined;
+  if (!row) return false;
+  if (role && row.role !== role) return false;
+  return true;
 }

@@ -28,6 +28,8 @@ export async function GET(_req: Request, context: { params: Promise<{ filename: 
     headers: {
       "Content-Type": MIME_BY_EXT[ext] ?? "application/octet-stream",
       "Cache-Control": "public, max-age=31536000, immutable",
+      "X-Content-Type-Options": "nosniff",
+      "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'",
     },
   });
 }
