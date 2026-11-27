@@ -1,10 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
+  authenticateStaffAccount,
+  createCashierAccount,
   createMenuItem,
   createOrder,
+  deleteCashierAccount,
   getMenuItems,
   getTables,
   listOrders,
+  listStaffAccounts,
   resetDbForTests,
   toggleMenuAvailability,
   updateOrderStatus,
@@ -189,5 +193,30 @@ describe("Cafe POS & Ordering Domain", () => {
     expect(detectImageExtension(new Uint8Array([0x3c, 0x73, 0x76, 0x67, 0, 0, 0, 0, 0, 0, 0, 0]))).toBeNull();
     expect(formatRupiah(0)).toBe("Rp 0");
     expect(formatRupiah(28000)).toBe("Rp 28.000");
+  });
+
+  it("authenticates seeded staff accounts and lets manager create/delete cashier accounts", () => {
+    const initialStaff = listStaffAccounts();
+    expect(initialStaff.length).toBe(2);
+
+    const admin = authenticateStaffAccount("admin@lizuicoffee.id", "admin123", "MANAGER");
+    expect(admin?.role).toBe("MANAGER");
+
+    const cashierOnManager = authenticateStaffAccount("kasir@lizuicoffee.id", "kasir123", "MANAGER");
+    expect(cashierOnManager).toBeNull();
+
+    const createdCashier = createCashierAccount({
+      name: "Rina Shift Pagi",
+      username: "rina@lizuicoffee.id",
+      password: "rinaPassword123",
+    });
+    expect(createdCashier.role).toBe("CASHIER");
+
+    const rinaLogin = authenticateStaffAccount("rina@lizuicoffee.id", "rinaPassword123", "CASHIER");
+    expect(rinaLogin?.name).toBe("Rina Shift Pagi");
+
+    expect(() => deleteCashierAccount("staff-admin")).toThrow(/utama/i);
+    deleteCashierAccount(createdCashier.id);
+    expect(authenticateStaffAccount("rina@lizuicoffee.id", "rinaPassword123", "CASHIER")).toBeNull();
   });
 });

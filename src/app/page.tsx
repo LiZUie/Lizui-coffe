@@ -42,6 +42,7 @@ export default function CustomerOrderPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [lastOrder, setLastOrder] = useState<Order | null>(null);
   const [mobileCartOpen, setMobileCartOpen] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(true);
 
   const [myOrderIds, setMyOrderIds] = useState<string[]>([]);
   const [myOrders, setMyOrders] = useState<Order[]>([]);
@@ -247,7 +248,52 @@ export default function CustomerOrderPage() {
   );
 
   return (
-    <AppShell rightPanel={cartElement}>
+    <AppShell rightPanel={showWelcome ? undefined : cartElement}>
+      {showWelcome ? (
+        <section
+          aria-label="Halaman pembuka Lizui Coffee"
+          className="mx-auto my-2 flex min-h-[78vh] max-w-md flex-col justify-between overflow-hidden rounded-[28px] border border-[#2A2520] bg-[#0F130F] text-[#FFFFFF] shadow-xl sm:max-w-lg"
+        >
+          <div className="relative flex flex-1 flex-col justify-between p-6 sm:p-8">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/welcome-hero.jpg"
+              alt="Secangkir latte art Lizui Coffee di atas meja kayu"
+              className="absolute inset-0 h-full w-full object-cover object-center"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-[#0E130F]/95 via-[#221A14]/65 to-[#0C100C]/90" />
+
+            <div className="relative z-10 pt-4 text-center">
+              {tableCode ? (
+                <span className="mb-3 inline-flex items-center rounded-full border border-[#C9A37B]/40 bg-[#1B1612]/85 px-3.5 py-1 text-xs font-bold tracking-wide text-[#E7C6A1]">
+                  QR Meja Terdeteksi • Meja {tableCode}
+                </span>
+              ) : (
+                <span className="mb-3 inline-flex items-center rounded-full border border-[#C9A37B]/30 bg-[#1B1612]/80 px-3.5 py-1 text-xs font-semibold tracking-wide text-[#E7C6A1]">
+                  Selamat Datang di Lizui Coffee
+                </span>
+              )}
+              <h1 className="mx-auto max-w-xs text-3xl leading-tight font-bold tracking-tight text-[#FFFFFF] sm:max-w-sm sm:text-4xl">
+                Coffee so good, your taste buds will love it
+              </h1>
+              <p className="mx-auto mt-3 max-w-xs text-xs leading-relaxed text-[#E3DBD3] sm:text-sm">
+                The best grain, the finest roast, the most powerful flavor.
+              </p>
+            </div>
+
+            <div className="relative z-10 mt-56 pt-6">
+              <button
+                type="button"
+                onClick={() => setShowWelcome(false)}
+                className="min-h-[54px] w-full rounded-full bg-[#C9A37B] px-6 text-base font-bold text-[#FFFFFF] shadow-lg transition-colors hover:bg-[#B89167]"
+              >
+                Get Started
+              </button>
+            </div>
+          </div>
+        </section>
+      ) : (
+      <>
       <div className="space-y-6 pb-24 xl:pb-6">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div>
@@ -259,7 +305,15 @@ export default function CustomerOrderPage() {
             </p>
           </div>
 
-          <div role="tablist" aria-label="Tampilan pelanggan" className="inline-flex rounded-xl bg-[#FFFFFF] p-1 border border-[#DDD5CD]">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowWelcome(true)}
+              className="min-h-[44px] rounded-xl border border-[#DDD5CD] bg-[#FFFFFF] px-3 text-xs font-semibold text-[#5E5650] hover:text-[#1F1B18]"
+            >
+              Layar Pembuka
+            </button>
+            <div role="tablist" aria-label="Tampilan pelanggan" className="inline-flex rounded-xl bg-[#FFFFFF] p-1 border border-[#DDD5CD]">
             <button
               type="button"
               role="tab"
@@ -285,6 +339,7 @@ export default function CustomerOrderPage() {
             >
               Pesanan Saya ({myOrders.length})
             </button>
+            </div>
           </div>
         </div>
 
@@ -445,6 +500,8 @@ export default function CustomerOrderPage() {
           </div>
         </div>
       ) : null}
+      </>
+      )}
     </AppShell>
   );
 }

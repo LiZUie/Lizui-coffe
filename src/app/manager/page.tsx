@@ -6,7 +6,14 @@ import { MenuVisual } from "@/components/MenuVisual";
 import { PinGate } from "@/components/PinGate";
 import { CATEGORY_LABELS, formatDateTimeShort, formatRupiah } from "@/lib/format";
 import { MENU_IMAGE_PRESETS } from "@/lib/menu-images";
-import type { AnalyticsSummary, MenuCategory, MenuItem, StaffRole, TrendPoint } from "@/lib/types";
+import type {
+  AnalyticsSummary,
+  MenuCategory,
+  MenuItem,
+  StaffAccount,
+  StaffRole,
+  TrendPoint,
+} from "@/lib/types";
 
 function RevenueTrendChart({ trend }: { trend: TrendPoint[] }) {
   const maxRevenue = Math.max(...trend.map((t) => t.revenue), 1);
@@ -125,13 +132,21 @@ export default function ManagerDashboardPage() {
   const [savingMenu, setSavingMenu] = useState(false);
   const [menuMsg, setMenuMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
+  const [staffList, setStaffList] = useState<StaffAccount[]>([]);
+  const [cashierName, setCashierName] = useState("");
+  const [cashierUsername, setCashierUsername] = useState("");
+  const [cashierPassword, setCashierPassword] = useState("");
+  const [savingStaff, setSavingStaff] = useState(false);
+  const [staffMsg, setStaffMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+
   const loadAnalytics = useCallback(async (selectedPeriod: "today" | "7d" | "30d") => {
     setLoading(true);
     setError(null);
     try {
-      const [anaRes, menuRes] = await Promise.all([
+      const [anaRes, menuRes, staffRes] = await Promise.all([
         fetch(`/api/analytics?period=${selectedPeriod}`),
         fetch("/api/menu"),
+        fetch("/api/staff"),
       ]);
       if (anaRes.status === 403) {
         setRole(null);
@@ -144,6 +159,10 @@ export default function ManagerDashboardPage() {
       const m = (await menuRes.json()) as { items: MenuItem[] };
       setSummary(ana);
       setMenuItems(m.items);
+      if (staffRes.ok) {
+        const s = (await staffRes.json()) as { staff: StaffAccount[] };
+        setStaffList(s.staff);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Terjadi kesalahan.");
     } finally {
@@ -169,9 +188,10 @@ export default function ManagerDashboardPage() {
     let active = true;
     async function fetchInitial() {
       try {
-        const [anaRes, menuRes] = await Promise.all([
+        const [anaRes, menuRes, staffRes] = await Promise.all([
           fetch(`/api/analytics?period=${period}`),
           fetch("/api/menu"),
+          fetch("/api/staff"),
         ]);
         if (!active) return;
         if (anaRes.status === 403) {
@@ -185,6 +205,10 @@ export default function ManagerDashboardPage() {
         const m = (await menuRes.json()) as { items: MenuItem[] };
         setSummary(ana);
         setMenuItems(m.items);
+        if (staffRes.ok) {
+          const s = (await staffRes.json()) as { staff: StaffAccount[] };
+          setStaffList(s.staff);
+        }
         setError(null);
       } catch (err) {
         if (active) setError(err instanceof Error ? err.message : "Terjadi kesalahan.");
@@ -254,6 +278,52 @@ export default function ManagerDashboardPage() {
     await loadAnalytics(period);
   }
 
+  async function handleCreateCashier(e: React.FormEvent) {
+    e.preventDefault();
+    setSavingStaff(true);
+    setStaffMsg(null);
+    try {
+      const res = await fetch("/api/staff", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: cashierName,
+          username: cashierUsername,
+          password: cashierPassword,
+        }),
+      });
+      const data = (await res.json()) as { account?: StaffAccount; error?: string };
+      if (!res.ok) {
+        setStaffMsg({ type: "err", text: data.error ?? "Gagal menambah akun kasir." });
+        return;
+      }
+      setCashierName("");
+      setCashierUsername("");
+      setCashierPassword("");
+      setStaffMsg({
+        type: "ok",
+        text: `Akun kasir ${data.account?.username ?? ""} berhasil dibuat dan siap dipakai login di Kasir POS.`,
+      });
+      await loadAnalytics(period);
+    } finally {
+      setSavingStaff(false);
+    }
+  }
+
+  async function handleDeleteCashier(id: string, username: string) {
+    setStaffMsg(null);
+    const res = await fetch(`/api/staff?id=${encodeURIComponent(id)}`, {
+      method: "DELETE",
+    });
+    const data = (await res.json()) as { error?: string };
+    if (!res.ok) {
+      setStaffMsg({ type: "err", text: data.error ?? "Gagal menghapus akun kasir." });
+      return;
+    }
+    setStaffMsg({ type: "ok", text: `Akun kasir ${username} telah dihapus.` });
+    await loadAnalytics(period);
+  }
+
   async function handleLogout() {
     await fetch("/api/auth", { method: "DELETE" });
     setRole(null);
@@ -274,8 +344,8 @@ export default function ManagerDashboardPage() {
       <AppShell>
         <PinGate
           requiredRole="MANAGER"
-          title="Masuk Dashboard Manajer"
-          subtitle="Masukkan PIN Manajer untuk melihat grafik perkembangan kafe, menu terlaris, dan export laporan."
+          title="Portal Admin & Manajemen"
+          subtitle="Masuk dengan akun Admin / Manajemen untuk memantau perkembangan kafe, kelola menu, dan membuat akun kasir."
           demoPin="9999"
           onSuccess={(r) => setRole(r)}
         />
@@ -714,6 +784,138 @@ export default function ManagerDashboardPage() {
                       >
                         {item.isAvailable ? "Aktif" : "Habis"}
                       </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            <section className="no-print grid grid-cols-1 gap-6 xl:grid-cols-2">
+              <form
+                onSubmit={(e) => void handleCreateCashier(e)}
+                className="space-y-4 rounded-2xl border border-[#DDD5CD] bg-[#FFFFFF] p-5"
+              >
+                <div>
+                  <h2 className="text-lg font-bold text-[#1F1B18]">Tambah Akun Kasir Baru</h2>
+                  <p className="text-xs text-[#5E5650]">
+                    Kasir tidak dapat mendaftar sendiri. Hanya Admin / Manajemen yang dapat membuat
+                    akun login kasir.
+                  </p>
+                </div>
+
+                <div>
+                  <label htmlFor="cashier-name" className="block text-xs font-semibold text-[#1F1B18]">
+                    Nama Lengkap Kasir
+                  </label>
+                  <input
+                    id="cashier-name"
+                    required
+                    value={cashierName}
+                    onChange={(e) => setCashierName(e.target.value)}
+                    placeholder="Rina (Shift Pagi)"
+                    className="mt-1 min-h-[44px] w-full rounded-[10px] border border-[#DDD5CD] bg-[#FAF7F4] px-3 text-sm"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div>
+                    <label
+                      htmlFor="cashier-username"
+                      className="block text-xs font-semibold text-[#1F1B18]"
+                    >
+                      Email / Username Login
+                    </label>
+                    <input
+                      id="cashier-username"
+                      required
+                      value={cashierUsername}
+                      onChange={(e) => setCashierUsername(e.target.value)}
+                      placeholder="rina@lizuicoffee.id"
+                      className="mt-1 min-h-[44px] w-full rounded-[10px] border border-[#DDD5CD] bg-[#FAF7F4] px-3 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="cashier-password"
+                      className="block text-xs font-semibold text-[#1F1B18]"
+                    >
+                      Password Login (Min. 6 Karakter)
+                    </label>
+                    <input
+                      id="cashier-password"
+                      type="password"
+                      required
+                      minLength={6}
+                      value={cashierPassword}
+                      onChange={(e) => setCashierPassword(e.target.value)}
+                      placeholder="Minimal 6 karakter"
+                      className="mt-1 min-h-[44px] w-full rounded-[10px] border border-[#DDD5CD] bg-[#FAF7F4] px-3 text-sm"
+                    />
+                  </div>
+                </div>
+
+                {staffMsg ? (
+                  <p
+                    role={staffMsg.type === "err" ? "alert" : "status"}
+                    className={`rounded-[10px] px-3 py-2 text-xs font-semibold ${
+                      staffMsg.type === "err"
+                        ? "bg-[#FFF1EB] text-[#B93815]"
+                        : "bg-[#ECFDF3] text-[#166534]"
+                    }`}
+                  >
+                    {staffMsg.text}
+                  </p>
+                ) : null}
+
+                <button
+                  type="submit"
+                  disabled={savingStaff}
+                  className="min-h-[44px] rounded-[10px] bg-[#B8551E] px-5 text-sm font-bold text-[#FFFFFF] hover:bg-[#9E4616] disabled:opacity-50"
+                >
+                  {savingStaff ? "Membuat Akun..." : "Buat Akun Kasir"}
+                </button>
+              </form>
+
+              <div className="rounded-2xl border border-[#DDD5CD] bg-[#FFFFFF] p-5">
+                <h2 className="text-lg font-bold text-[#1F1B18]">
+                  Daftar Akun Staf &amp; Kasir ({staffList.length})
+                </h2>
+                <p className="text-xs text-[#5E5650]">
+                  Akun dengan peran Kasir hanya dapat mengakses halaman Kasir POS.
+                </p>
+
+                <div className="mt-3 divide-y divide-[#F0EAE3]">
+                  {staffList.map((st) => (
+                    <div key={st.id} className="flex items-center justify-between gap-3 py-3 text-sm">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="truncate font-semibold text-[#1F1B18]">{st.name}</p>
+                          <span
+                            className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
+                              st.role === "MANAGER"
+                                ? "bg-[#231F1D] text-[#FFFFFF]"
+                                : "bg-[#F3B68D] text-[#1F1B18]"
+                            }`}
+                          >
+                            {st.role === "MANAGER" ? "Admin / Manajer" : "Kasir"}
+                          </span>
+                        </div>
+                        <p className="mt-0.5 truncate text-xs text-[#5E5650]">{st.username}</p>
+                      </div>
+
+                      {st.role === "CASHIER" ? (
+                        <button
+                          type="button"
+                          onClick={() => void handleDeleteCashier(st.id, st.username)}
+                          className="min-h-[38px] shrink-0 rounded-[10px] border border-[#E8CFC4] bg-[#FFF1EB] px-3 text-xs font-bold text-[#B93815] hover:bg-[#FDE4D9]"
+                        >
+                          Hapus Akun
+                        </button>
+                      ) : (
+                        <span className="shrink-0 text-xs font-semibold text-[#5E5650]">
+                          Akun Utama
+                        </span>
+                      )}
                     </div>
                   ))}
                 </div>

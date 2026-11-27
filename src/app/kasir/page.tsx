@@ -249,8 +249,8 @@ export default function CashierPage() {
       <AppShell>
         <PinGate
           requiredRole="CASHIER"
-          title="Masuk Kasir Outlet"
-          subtitle="Masukkan PIN demo staf untuk mengelola order meja, bawa pulang, dan antrean."
+          title="Portal Kasir POS"
+          subtitle="Masuk dengan akun kasir yang didaftarkan oleh Admin / Manajemen untuk mengelola transaksi dan antrean."
           demoPin="1234"
           onSuccess={(r) => setRole(r)}
         />

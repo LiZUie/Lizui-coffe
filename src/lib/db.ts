@@ -16,6 +16,8 @@ import type {
   OrderType,
   PaymentMethod,
   PaymentStatus,
+  StaffAccount,
+  StaffRole,
   SugarLevel,
   TableStatus,
 } from "./types";
@@ -100,6 +102,15 @@ export function getDb(): DatabaseSync {
       quantity INTEGER NOT NULL,
       unit_price INTEGER NOT NULL,
       line_total INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS staff_users (
+      id TEXT PRIMARY KEY,
+      username TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL,
+      role TEXT NOT NULL,
+      password_hash TEXT NOT NULL,
+      created_at TEXT NOT NULL
     );
   `);
 
@@ -301,6 +312,31 @@ function seedIfEmpty(db: DatabaseSync): void {
   const orderCount = (db.prepare("SELECT COUNT(*) AS count FROM orders").get() as { count: number }).count;
   if (orderCount === 0) {
     seedHistoricalOrders(db);
+  }
+
+  const staffCount = (db.prepare("SELECT COUNT(*) AS count FROM staff_users").get() as { count: number }).count;
+  if (staffCount === 0) {
+    const now = new Date().toISOString();
+    const insertStaff = db.prepare(`
+      INSERT INTO staff_users (id, username, name, role, password_hash, created_at)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `);
+    insertStaff.run(
+      "staff-admin",
+      "admin@lizuicoffee.id",
+      "Admin Manajemen",
+      "MANAGER",
+      hashStaffPassword("admin123"),
+      now,
+    );
+    insertStaff.run(
+      "staff-kasir-1",
+      "kasir@lizuicoffee.id",
+      "Kasir Utama",
+      "CASHIER",
+      hashStaffPassword("kasir123"),
+      now,
+    );
   }
 }
 
@@ -826,4 +862,102 @@ export function updateOrderStatus(
   }
 
   return getOrderById(id)!;
+}
+
+function hashStaffPassword(password: string, salt = crypto.randomBytes(16).toString("hex")): string {
+  const derived = crypto.scryptSync(password, salt, 32).toString("hex");
+  return `${salt}:${derived}`;
+}
+
+function verifyStaffPasswordHash(password: string, stored: string): boolean {
+  const [salt, expectedHex] = stored.split(":");
+  if (!salt || !expectedHex) return false;
+  const derived = crypto.scryptSync(password, salt, 32);
+  const expected = Buffer.from(expectedHex, "hex");
+  if (derived.length !== expected.length) return false;
+  return crypto.timingSafeEqual(derived, expected);
+}
+
+function mapStaffRow(row: Record<string, unknown>): StaffAccount {
+  return {
+    id: String(row.id),
+    username: String(row.username),
+    name: String(row.name),
+    role: row.role === "MANAGER" ? "MANAGER" : "CASHIER",
+    createdAt: String(row.created_at),
+  };
+}
+
+export function listStaffAccounts(): StaffAccount[] {
+  const db = getDb();
+  const rows = db
+    .prepare("SELECT id, username, name, role, created_at FROM staff_users ORDER BY role DESC, created_at ASC")
+    .all() as Array<Record<string, unknown>>;
+  return rows.map(mapStaffRow);
+}
+
+export function authenticateStaffAccount(
+  identifier: string,
+  password: string,
+  requiredRole?: StaffRole,
+): StaffAccount | null {
+  const db = getDb();
+  const cleanId = identifier.trim().toLowerCase();
+  if (!cleanId || !password) return null;
+  const altEmail = cleanId.includes("@") ? cleanId : `${cleanId}@lizuicoffee.id`;
+
+  const row = db
+    .prepare("SELECT * FROM staff_users WHERE LOWER(username) = ? OR LOWER(username) = ?")
+    .get(cleanId, altEmail) as Record<string, unknown> | undefined;
+  if (!row) return null;
+
+  if (!verifyStaffPasswordHash(password, String(row.password_hash))) {
+    return null;
+  }
+
+  const account = mapStaffRow(row);
+  if (requiredRole === "MANAGER" && account.role !== "MANAGER") {
+    return null;
+  }
+  return account;
+}
+
+export function createCashierAccount(input: {
+  name: string;
+  username: string;
+  password: string;
+}): StaffAccount {
+  const db = getDb();
+  const name = input.name.trim();
+  const username = input.username.trim().toLowerCase();
+  const password = input.password;
+
+  if (!name) throw new Error("Nama kasir wajib diisi.");
+  if (username.length < 3) throw new Error("Username atau email kasir minimal 3 karakter.");
+  if (password.length < 6) throw new Error("Password kasir minimal 6 karakter.");
+
+  const existing = db
+    .prepare("SELECT id FROM staff_users WHERE LOWER(username) = ?")
+    .get(username) as { id: string } | undefined;
+  if (existing) throw new Error("Username atau email tersebut sudah terdaftar.");
+
+  const id = `staff-${crypto.randomUUID().slice(0, 8)}`;
+  const now = new Date().toISOString();
+  db.prepare(`
+    INSERT INTO staff_users (id, username, name, role, password_hash, created_at)
+    VALUES (?, ?, ?, 'CASHIER', ?, ?)
+  `).run(id, username, name, hashStaffPassword(password), now);
+
+  const row = db
+    .prepare("SELECT id, username, name, role, created_at FROM staff_users WHERE id = ?")
+    .get(id) as Record<string, unknown>;
+  return mapStaffRow(row);
+}
+
+export function deleteCashierAccount(id: string): void {
+  const db = getDb();
+  const row = db.prepare("SELECT role FROM staff_users WHERE id = ?").get(id) as { role: string } | undefined;
+  if (!row) throw new Error("Akun staf tidak ditemukan.");
+  if (row.role === "MANAGER") throw new Error("Akun Admin/Manajemen utama tidak dapat dihapus.");
+  db.prepare("DELETE FROM staff_users WHERE id = ? AND role = 'CASHIER'").run(id);
 }

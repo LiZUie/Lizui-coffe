@@ -113,7 +113,7 @@ export function AppShell({
             <div className="rounded-xl bg-[#FAF7F4] p-3 text-xs text-[#5E5650]">
               <p className="font-semibold text-[#1F1B18]">Outlet Utama</p>
               <p className="mt-1">10 meja aktif (M01 sampai M10)</p>
-              <p className="mt-0.5">PIN Demo: Kasir 1234, Manajer 9999</p>
+              <p className="mt-0.5">Akun Kasir dikelola oleh Admin</p>
             </div>
             {staffRoleLabel && onLogoutStaff ? (
               <button

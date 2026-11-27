@@ -10,6 +10,14 @@ export type PaymentStatus = "UNPAID" | "PAID";
 export type TableStatus = "AVAILABLE" | "OCCUPIED";
 export type StaffRole = "CASHIER" | "MANAGER";
 
+export interface StaffAccount {
+  id: string;
+  username: string;
+  name: string;
+  role: StaffRole;
+  createdAt: string;
+}
+
 export interface MenuVariant {
   label: string;
   priceDelta: number;
