@@ -257,56 +257,66 @@ export default function CustomerOrderPage() {
     />
   );
 
+  if (showWelcome) {
+    return (
+      <main
+        aria-label="Halaman pembuka Lizui Coffee"
+        className="relative flex min-h-screen w-full flex-col justify-between overflow-hidden bg-[#0D110D] text-[#FFFFFF]"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/images/welcome-hero.jpg"
+          alt="Secangkir latte art Lizui Coffee di atas meja kayu"
+          className="absolute inset-0 h-full w-full object-cover object-center"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0C100C]/90 via-[#1D1611]/50 to-[#0B0E0B]/92" />
+
+        <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-2xl flex-col justify-between px-6 py-10 sm:px-10 sm:py-14">
+          <div className="flex items-center justify-between">
+            <span className="text-xl font-bold tracking-tight text-[#FFFFFF] sm:text-2xl">
+              Lizui <span className="text-[#DE8C52]">Coffee</span>
+            </span>
+            {tableCode ? (
+              <span className="inline-flex items-center rounded-full border border-[#C9A37B]/45 bg-[#1B1612]/85 px-4 py-1.5 text-xs font-bold tracking-wide text-[#E7C6A1]">
+                QR Meja • {tableCode}
+              </span>
+            ) : (
+              <span className="inline-flex items-center rounded-full border border-[#C9A37B]/35 bg-[#1B1612]/80 px-4 py-1.5 text-xs font-semibold tracking-wide text-[#E7C6A1]">
+                Self-Order Menu
+              </span>
+            )}
+          </div>
+
+          <div className="my-auto py-8 text-center">
+            <h1 className="mx-auto max-w-xl text-4xl leading-tight font-bold tracking-tight text-[#FFFFFF] sm:text-5xl lg:text-6xl">
+              Coffee so good, your taste buds will love it
+            </h1>
+            <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-[#E5DDD5] sm:text-base">
+              The best grain, the finest roast, the most powerful flavor.
+            </p>
+          </div>
+
+          <div className="mx-auto w-full max-w-md pb-2">
+            <button
+              type="button"
+              disabled={enteringMenu}
+              onClick={handleEnterMenu}
+              className="min-h-[58px] w-full rounded-full bg-[#C9A37B] px-8 text-base font-bold text-[#FFFFFF] shadow-xl transition-all duration-200 hover:scale-[1.01] hover:bg-[#B89167] disabled:opacity-75 sm:text-lg"
+            >
+              {enteringMenu ? "Menyiapkan Menu..." : "Get Started"}
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
-    <AppShell rightPanel={showWelcome || enteringMenu ? undefined : cartElement}>
+    <AppShell rightPanel={enteringMenu ? undefined : cartElement}>
       {enteringMenu ? (
         <div className="my-10">
           <CafeLoader label="Menyiapkan daftar menu segar Lizui Coffee..." />
         </div>
-      ) : showWelcome ? (
-        <section
-          aria-label="Halaman pembuka Lizui Coffee"
-          className="mx-auto my-2 flex min-h-[78vh] max-w-md flex-col justify-between overflow-hidden rounded-[28px] border border-[#2A2520] bg-[#0F130F] text-[#FFFFFF] shadow-xl sm:max-w-lg"
-        >
-          <div className="relative flex flex-1 flex-col justify-between p-6 sm:p-8">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/images/welcome-hero.jpg"
-              alt="Secangkir latte art Lizui Coffee di atas meja kayu"
-              className="absolute inset-0 h-full w-full object-cover object-center"
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-[#0E130F]/95 via-[#221A14]/65 to-[#0C100C]/90" />
-
-            <div className="relative z-10 pt-4 text-center">
-              {tableCode ? (
-                <span className="mb-3 inline-flex items-center rounded-full border border-[#C9A37B]/40 bg-[#1B1612]/85 px-3.5 py-1 text-xs font-bold tracking-wide text-[#E7C6A1]">
-                  QR Meja Terdeteksi • Meja {tableCode}
-                </span>
-              ) : (
-                <span className="mb-3 inline-flex items-center rounded-full border border-[#C9A37B]/30 bg-[#1B1612]/80 px-3.5 py-1 text-xs font-semibold tracking-wide text-[#E7C6A1]">
-                  Selamat Datang di Lizui Coffee
-                </span>
-              )}
-              <h1 className="mx-auto max-w-xs text-3xl leading-tight font-bold tracking-tight text-[#FFFFFF] sm:max-w-sm sm:text-4xl">
-                Coffee so good, your taste buds will love it
-              </h1>
-              <p className="mx-auto mt-3 max-w-xs text-xs leading-relaxed text-[#E3DBD3] sm:text-sm">
-                The best grain, the finest roast, the most powerful flavor.
-              </p>
-            </div>
-
-            <div className="relative z-10 mt-56 pt-6">
-              <button
-                type="button"
-                disabled={enteringMenu}
-                onClick={handleEnterMenu}
-                className="min-h-[54px] w-full rounded-full bg-[#C9A37B] px-6 text-base font-bold text-[#FFFFFF] shadow-lg transition-all duration-200 hover:scale-[1.01] hover:bg-[#B89167] disabled:opacity-75"
-              >
-                {enteringMenu ? "Menyiapkan Menu..." : "Get Started"}
-              </button>
-            </div>
-          </div>
-        </section>
       ) : (
       <>
       <div className="animate-fade-up space-y-6 pb-24 xl:pb-6">

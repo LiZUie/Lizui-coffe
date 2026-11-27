@@ -929,7 +929,7 @@ export function authenticateStaffAccount(
   }
 
   const account = mapStaffRow(row);
-  if (requiredRole === "MANAGER" && account.role !== "MANAGER") {
+  if (requiredRole && account.role !== requiredRole) {
     return null;
   }
   return account;

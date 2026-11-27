@@ -134,6 +134,7 @@ describe("Cafe POS & Ordering Domain", () => {
     expect(hasRoleAccess(verifyStaffToken(cashierToken), "CASHIER")).toBe(true);
     expect(hasRoleAccess(verifyStaffToken(cashierToken), "MANAGER")).toBe(false);
     expect(hasRoleAccess(verifyStaffToken(managerToken), "MANAGER")).toBe(true);
+    expect(hasRoleAccess(verifyStaffToken(managerToken), "CASHIER")).toBe(false);
   });
 
   it("applies extra sugar fee on drinks except tea and supports coffee temperature options", () => {
@@ -210,6 +211,10 @@ describe("Cafe POS & Ordering Domain", () => {
 
     const admin = authenticateStaffAccount("admin@lizuicoffee.id", "admin123", "MANAGER");
     expect(admin?.role).toBe("MANAGER");
+
+    // Strict role separation: admin cannot log in as CASHIER, cashier cannot log in as MANAGER
+    const adminOnCashier = authenticateStaffAccount("admin@lizuicoffee.id", "admin123", "CASHIER");
+    expect(adminOnCashier).toBeNull();
 
     const cashierOnManager = authenticateStaffAccount("kasir@lizuicoffee.id", "kasir123", "MANAGER");
     expect(cashierOnManager).toBeNull();

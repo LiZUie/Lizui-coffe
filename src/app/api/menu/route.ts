@@ -98,7 +98,7 @@ export async function POST(req: Request) {
 
 export async function PATCH(req: Request) {
   const role = await getStaffSessionRole();
-  if (!hasRoleAccess(role, "CASHIER")) {
+  if (!hasRoleAccess(role, "CASHIER") && !hasRoleAccess(role, "MANAGER")) {
     return NextResponse.json({ error: "Login staf diperlukan" }, { status: 403 });
   }
   try {

@@ -54,7 +54,7 @@ export async function POST(req: Request) {
             error:
               requiredRole === "MANAGER"
                 ? "Kredensial tidak valid atau akun bukan Admin/Manajemen."
-                : "Email/username atau password kasir salah.",
+                : "Kredensial tidak valid atau akun bukan akun Kasir.",
           },
           { status: 401 },
         );

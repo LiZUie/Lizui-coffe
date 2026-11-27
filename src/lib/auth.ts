@@ -109,6 +109,5 @@ export async function getStaffSessionRole(): Promise<StaffRole | null> {
 
 export function hasRoleAccess(sessionRole: StaffRole | null, required: StaffRole): boolean {
   if (!sessionRole) return false;
-  if (required === "CASHIER") return sessionRole === "CASHIER" || sessionRole === "MANAGER";
-  return sessionRole === "MANAGER";
+  return sessionRole === required;
 }

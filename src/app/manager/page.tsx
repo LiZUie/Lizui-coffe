@@ -331,15 +331,15 @@ export default function ManagerDashboardPage() {
 
   if (authChecking) {
     return (
-      <AppShell>
+      <div className="flex min-h-screen items-center justify-center bg-[#15110F] p-6">
         <CafeLoader label="Memeriksa sesi Admin / Manajemen..." />
-      </AppShell>
+      </div>
     );
   }
 
   if (role !== "MANAGER") {
     return (
-      <AppShell>
+      <main className="min-h-screen bg-[#15110F]">
         <PinGate
           requiredRole="MANAGER"
           title="Portal Admin & Manajemen"
@@ -347,7 +347,7 @@ export default function ManagerDashboardPage() {
           demoPin="9999"
           onSuccess={(r) => setRole(r)}
         />
-      </AppShell>
+      </main>
     );
   }
 

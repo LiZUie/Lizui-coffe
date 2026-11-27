@@ -84,7 +84,7 @@ export default function CashierPage() {
   }, []);
 
   useEffect(() => {
-    if (!role) return;
+    if (role !== "CASHIER") return;
     let active = true;
     async function syncWorkspace() {
       try {
@@ -237,15 +237,15 @@ export default function CashierPage() {
 
   if (authChecking) {
     return (
-      <AppShell>
+      <div className="flex min-h-screen items-center justify-center bg-[#15110F] p-6">
         <CafeLoader label="Memeriksa sesi kasir..." />
-      </AppShell>
+      </div>
     );
   }
 
-  if (!role) {
+  if (role !== "CASHIER") {
     return (
-      <AppShell>
+      <main className="min-h-screen bg-[#15110F]">
         <PinGate
           requiredRole="CASHIER"
           title="Portal Kasir POS"
@@ -253,7 +253,7 @@ export default function CashierPage() {
           demoPin="1234"
           onSuccess={(r) => setRole(r)}
         />
-      </AppShell>
+      </main>
     );
   }
 
@@ -289,7 +289,7 @@ export default function CashierPage() {
     <AppShell
       rightPanel={cashierCartPanel}
       activeQueueCount={activeOrders.length}
-      staffRoleLabel={role === "MANAGER" ? "Manajer" : "Kasir"}
+      staffRoleLabel="Kasir"
       onLogoutStaff={() => void handleLogout()}
     >
       <div className={receiptOrder ? "no-print space-y-6" : "space-y-6"}>

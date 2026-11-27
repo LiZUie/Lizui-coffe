@@ -49,7 +49,7 @@ export function PinGate({ requiredRole, title, subtitle, onSuccess }: PinGatePro
   }
 
   return (
-    <div className="mx-auto my-2 overflow-hidden rounded-3xl border border-[#2C221E] bg-[#15110F] text-[#F5EFEA] shadow-xl lg:grid lg:min-h-[640px] lg:grid-cols-12">
+    <div className="min-h-screen w-full bg-[#15110F] text-[#F5EFEA] lg:grid lg:min-h-screen lg:grid-cols-12">
       <div className="relative min-h-[260px] lg:col-span-5 lg:min-h-full">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
