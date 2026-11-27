@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
-import { MenuVisual } from "@/components/MenuVisual";
+import { CafeLoader, MenuVisual } from "@/components/MenuVisual";
 import { PinGate } from "@/components/PinGate";
 import { CATEGORY_LABELS, formatDateTimeShort, formatRupiah } from "@/lib/format";
 import { MENU_IMAGE_PRESETS } from "@/lib/menu-images";
@@ -332,9 +332,7 @@ export default function ManagerDashboardPage() {
   if (authChecking) {
     return (
       <AppShell>
-        <div className="rounded-2xl border border-[#DDD5CD] bg-[#FFFFFF] p-8 text-sm text-[#5E5650]">
-          Memeriksa sesi manajer...
-        </div>
+        <CafeLoader label="Memeriksa sesi Admin / Manajemen..." />
       </AppShell>
     );
   }
@@ -412,9 +410,7 @@ export default function ManagerDashboardPage() {
         </div>
 
         {loading && !summary ? (
-          <div className="rounded-2xl border border-[#DDD5CD] bg-[#FFFFFF] p-8 text-sm text-[#5E5650]">
-            Memuat data analitik kafe...
-          </div>
+          <CafeLoader label="Memuat grafik analitik & laporan kafe..." />
         ) : error ? (
           <div role="alert" className="rounded-2xl border border-[#B93815] bg-[#FFF1EB] p-6 text-sm text-[#B93815]">
             <p className="font-semibold">{error}</p>

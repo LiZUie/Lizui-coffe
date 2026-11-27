@@ -1,6 +1,6 @@
 # Design Direction — Lizui Coffee (Kafe v1)
 
-Dial: ENERGY 2 / RHYTHM 2 / MOTION 1
+Dial: ENERGY 2 / RHYTHM 2 / MOTION 2
 
 ## Design Read
 Warm 3-column Cafe Ordering, Cashier POS, & Manager Analytics web app for walk-in/table cafe customers, outlet cashiers, and cafe owners, in a warm peach-and-espresso paper-surface style, dial ENERGY 2 / RHYTHM 2 / MOTION 1.

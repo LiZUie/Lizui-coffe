@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { CartPanel, type CartEntry } from "@/components/CartPanel";
 import { MenuBrowser, type CartSelection } from "@/components/MenuBrowser";
+import { CafeLoader } from "@/components/MenuVisual";
 import { mergeCartSelection, updateCartQuantity } from "@/lib/drink-options";
 import { formatDateTimeShort, formatRupiah, ORDER_STATUS_LABELS } from "@/lib/format";
 import type { CafeTable, MenuItem, Order, OrderType, PaymentMethod } from "@/lib/types";
@@ -43,6 +44,15 @@ export default function CustomerOrderPage() {
   const [lastOrder, setLastOrder] = useState<Order | null>(null);
   const [mobileCartOpen, setMobileCartOpen] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
+  const [enteringMenu, setEnteringMenu] = useState(false);
+
+  function handleEnterMenu() {
+    setEnteringMenu(true);
+    setTimeout(() => {
+      setShowWelcome(false);
+      setEnteringMenu(false);
+    }, 320);
+  }
 
   const [myOrderIds, setMyOrderIds] = useState<string[]>([]);
   const [myOrders, setMyOrders] = useState<Order[]>([]);
@@ -248,8 +258,12 @@ export default function CustomerOrderPage() {
   );
 
   return (
-    <AppShell rightPanel={showWelcome ? undefined : cartElement}>
-      {showWelcome ? (
+    <AppShell rightPanel={showWelcome || enteringMenu ? undefined : cartElement}>
+      {enteringMenu ? (
+        <div className="my-10">
+          <CafeLoader label="Menyiapkan daftar menu segar Lizui Coffee..." />
+        </div>
+      ) : showWelcome ? (
         <section
           aria-label="Halaman pembuka Lizui Coffee"
           className="mx-auto my-2 flex min-h-[78vh] max-w-md flex-col justify-between overflow-hidden rounded-[28px] border border-[#2A2520] bg-[#0F130F] text-[#FFFFFF] shadow-xl sm:max-w-lg"
@@ -284,17 +298,18 @@ export default function CustomerOrderPage() {
             <div className="relative z-10 mt-56 pt-6">
               <button
                 type="button"
-                onClick={() => setShowWelcome(false)}
-                className="min-h-[54px] w-full rounded-full bg-[#C9A37B] px-6 text-base font-bold text-[#FFFFFF] shadow-lg transition-colors hover:bg-[#B89167]"
+                disabled={enteringMenu}
+                onClick={handleEnterMenu}
+                className="min-h-[54px] w-full rounded-full bg-[#C9A37B] px-6 text-base font-bold text-[#FFFFFF] shadow-lg transition-all duration-200 hover:scale-[1.01] hover:bg-[#B89167] disabled:opacity-75"
               >
-                Get Started
+                {enteringMenu ? "Menyiapkan Menu..." : "Get Started"}
               </button>
             </div>
           </div>
         </section>
       ) : (
       <>
-      <div className="space-y-6 pb-24 xl:pb-6">
+      <div className="animate-fade-up space-y-6 pb-24 xl:pb-6">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-[#1F1B18]">
@@ -389,9 +404,7 @@ export default function CustomerOrderPage() {
             </div>
 
             {ordersLoading && myOrders.length === 0 ? (
-              <div className="rounded-2xl border border-[#DDD5CD] bg-[#FFFFFF] p-6 text-sm text-[#5E5650]">
-                Memuat status pesanan...
-              </div>
+              <CafeLoader label="Memuat status pesanan Anda..." />
             ) : myOrders.length === 0 ? (
               <div className="rounded-2xl border border-[#DDD5CD] bg-[#FFFFFF] p-8 text-center">
                 <p className="text-base font-bold text-[#1F1B18]">Belum ada pesanan di perangkat ini</p>

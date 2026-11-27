@@ -57,6 +57,60 @@ input:disabled,
   font-variant-numeric: tabular-nums;
 }
 
+@keyframes cafeFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes cafeShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes cafeSteam {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(2px) scaleY(0.92);
+  }
+  50% {
+    opacity: 0.95;
+    transform: translateY(-4px) scaleY(1.08);
+  }
+}
+
+.animate-fade-up {
+  animation: cafeFadeUp 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.cafe-shimmer {
+  background: linear-gradient(90deg, #F3EEE9 25%, #E7DDD3 50%, #F3EEE9 75%);
+  background-size: 200% 100%;
+  animation: cafeShimmer 1.5s ease-in-out infinite;
+}
+
+.animate-steam-1 {
+  animation: cafeSteam 1.6s ease-in-out infinite;
+}
+
+.animate-steam-2 {
+  animation: cafeSteam 1.6s ease-in-out 0.35s infinite;
+}
+
+.animate-steam-3 {
+  animation: cafeSteam 1.6s ease-in-out 0.7s infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

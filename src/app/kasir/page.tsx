@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { CartPanel, type CartEntry } from "@/components/CartPanel";
 import { MenuBrowser, type CartSelection } from "@/components/MenuBrowser";
+import { CafeLoader } from "@/components/MenuVisual";
 import { PinGate } from "@/components/PinGate";
 import { mergeCartSelection, updateCartQuantity } from "@/lib/drink-options";
 import { formatDateTimeShort, formatRupiah, ORDER_STATUS_LABELS } from "@/lib/format";
@@ -237,9 +238,7 @@ export default function CashierPage() {
   if (authChecking) {
     return (
       <AppShell>
-        <div className="rounded-2xl border border-[#DDD5CD] bg-[#FFFFFF] p-8 text-sm text-[#5E5650]">
-          Memeriksa sesi kasir...
-        </div>
+        <CafeLoader label="Memeriksa sesi kasir..." />
       </AppShell>
     );
   }

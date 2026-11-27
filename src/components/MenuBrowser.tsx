@@ -13,7 +13,7 @@ import {
 } from "@/lib/drink-options";
 import { CATEGORY_LABELS, formatRupiah } from "@/lib/format";
 import type { DrinkTemperature, MenuCategory, MenuItem, SugarLevel } from "@/lib/types";
-import { MenuVisual } from "./MenuVisual";
+import { CafeLoader, MenuVisual } from "./MenuVisual";
 
 export type CartSelection = SharedCartSelection;
 
@@ -101,8 +101,32 @@ export function MenuBrowser({
       </div>
 
       {loading ? (
-        <div className="rounded-2xl border border-[#DDD5CD] bg-[#FFFFFF] p-8 text-center text-sm text-[#5E5650]">
-          Memuat daftar menu kafe...
+        <div className="space-y-4">
+          <CafeLoader label="Memuat katalog menu Lizui Coffee..." />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2" aria-hidden="true">
+            {[0, 1, 2, 3].map((idx) => (
+              <div
+                key={idx}
+                className="flex flex-col justify-between rounded-2xl border border-[#DDD5CD] bg-[#FFFFFF] p-4"
+              >
+                <div className="flex gap-3.5">
+                  <div className="cafe-shimmer h-[88px] w-[88px] shrink-0 rounded-xl" />
+                  <div className="flex-1 space-y-2.5 py-1">
+                    <div className="cafe-shimmer h-4 w-3/5 rounded-md" />
+                    <div className="cafe-shimmer h-3 w-4/5 rounded-md" />
+                    <div className="flex gap-1.5 pt-1">
+                      <div className="cafe-shimmer h-7 w-16 rounded-full" />
+                      <div className="cafe-shimmer h-7 w-20 rounded-full" />
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-4 flex items-center justify-between gap-2 border-t border-[#F0EAE3] pt-3">
+                  <div className="cafe-shimmer h-10 w-24 rounded-[10px]" />
+                  <div className="cafe-shimmer h-10 flex-1 rounded-[10px]" />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       ) : error ? (
         <div role="alert" className="rounded-2xl border border-[#B93815] bg-[#FFF1EB] p-6 text-sm text-[#B93815]">
@@ -153,18 +177,20 @@ export function MenuBrowser({
             const qty = cardQty[item.id] ?? 1;
             const cartKey = buildCartKey(item.id, configured.variantLabel, currentTemp, currentSugar);
             const inCartQty = cartQuantities[cartKey] ?? 0;
-            const sizeScale = isDrink
-              ? configured.variantLabel.toLowerCase().includes("large")
-                ? "large"
-                : configured.variantLabel.toLowerCase().includes("small")
-                  ? "small"
-                  : "normal"
-              : "normal";
+            const pickedVariantObj =
+              item.variants.find((v) => v.label === configured.variantLabel) ?? item.variants[0];
+            const sizeScale: "small" | "large" | "normal" =
+              item.variants.length > 1
+                ? configured.variantLabel.toLowerCase().includes("large") ||
+                  (pickedVariantObj?.priceDelta ?? 0) > 0
+                  ? "large"
+                  : "small"
+                : "normal";
 
             return (
               <article
                 key={item.id}
-                className={`flex flex-col justify-between rounded-2xl border bg-[#FFFFFF] p-4 transition-colors ${
+                className={`animate-fade-up flex flex-col justify-between rounded-2xl border bg-[#FFFFFF] p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
                   item.isAvailable ? "border-[#DDD5CD]" : "border-[#E8CFC4] bg-[#FDF9F7]"
                 }`}
               >
