@@ -193,7 +193,7 @@ function csvCell(value: string | number | null | undefined): string {
 
 export function buildOrdersCsv(summary: AnalyticsSummary): string {
   const lines: string[] = [];
-  lines.push(["LAPORAN PENJUALAN PURR'COFFEE", `Periode: ${summary.period}`].map(csvCell).join(","));
+  lines.push(["LAPORAN PENJUALAN LIZUI COFFEE", `Periode: ${summary.period}`].map(csvCell).join(","));
   lines.push(["Total Omzet (IDR)", summary.totalRevenue, "Total Pesanan", summary.totalOrders].map(csvCell).join(","));
   lines.push("");
   lines.push(

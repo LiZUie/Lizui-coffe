@@ -23,7 +23,7 @@ export async function GET(req: Request) {
       status: 200,
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename="laporan-purrcoffee-${period}-${stamp}.csv"`,
+        "Content-Disposition": `attachment; filename="laporan-lizuicoffee-${period}-${stamp}.csv"`,
       },
     });
   }

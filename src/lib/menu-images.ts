@@ -9,9 +9,9 @@ export const MENU_IMAGE_PRESETS: MenuImagePreset[] = [
   { key: "iced-latte", label: "Cappucino" },
   { key: "coffee-latte", label: "Coffee Latte" },
   { key: "americano", label: "Americano" },
-  { key: "v60", label: "V60 Brew" },
+  { key: "v60", label: "Black Tea" },
   { key: "matcha", label: "Matcha" },
-  { key: "chocolate", label: "Cokelat" },
+  { key: "chocolate", label: "Dark Chocolate" },
   { key: "rice-bowl", label: "Rice Bowl" },
   { key: "pasta", label: "Pasta" },
   { key: "fries", label: "Snack" },
@@ -20,7 +20,7 @@ export const MENU_IMAGE_PRESETS: MenuImagePreset[] = [
 ];
 
 const PRESET_SET = new Set(MENU_IMAGE_PRESETS.map((p) => p.key));
-const HOT_COFFEE_KEYS = new Set(["iced-latte", "coffee-latte"]);
+const HOT_COFFEE_KEYS = new Set(["iced-latte", "coffee-latte", "americano", "v60", "chocolate"]);
 const UPLOADED_PATH_RE = /^\/api\/menu\/image\/[a-f0-9-]+\.(jpg|png|webp)$/;
 
 export function isPresetMenuKey(value: string): boolean {

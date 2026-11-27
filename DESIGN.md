@@ -1,4 +1,4 @@
-# Design Direction — Purr'Coffee (Kafe v1)
+# Design Direction — Lizui Coffee (Kafe v1)
 
 Dial: ENERGY 2 / RHYTHM 2 / MOTION 1
 

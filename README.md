@@ -1,4 +1,4 @@
-# Purr'Coffee (`kafe v1`)
+# Lizui Coffee (`kafe v1`)
 
 Sistem pemesanan kafe terintegrasi dalam satu aplikasi **Next.js (App Router, TypeScript, Tailwind CSS)** dengan database lokal **SQLite (`node:sqlite`)**.
 

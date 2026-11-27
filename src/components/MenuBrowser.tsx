@@ -6,7 +6,7 @@ import {
   COFFEE_TEMPERATURES,
   computeConfiguredUnitPrice,
   getSugarExtraPrice,
-  isCoffeeCategory,
+  hasTemperatureOption,
   isDrinkCategory,
   type SharedCartSelection,
   SUGAR_LEVELS,
@@ -136,9 +136,9 @@ export function MenuBrowser({
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {filtered.map((item) => {
             const isDrink = isDrinkCategory(item.category);
-            const isCoffee = isCoffeeCategory(item.category);
+            const hasTemp = hasTemperatureOption(item);
             const currentVariantLabel = selectedVariant[item.id] ?? item.variants[0]?.label ?? "Regular";
-            const currentTemp: DrinkTemperature | undefined = isCoffee
+            const currentTemp: DrinkTemperature | undefined = hasTemp
               ? selectedTemp[item.id] ?? "Ice"
               : undefined;
             const currentSugar: SugarLevel | undefined = isDrink
@@ -211,7 +211,7 @@ export function MenuBrowser({
                         })}
                       </div>
 
-                      {isCoffee ? (
+                      {hasTemp ? (
                         <div className="flex flex-wrap items-center gap-1.5">
                           <span className="mr-0.5 text-[11px] font-semibold text-[#5E5650]">Sajian:</span>
                           {COFFEE_TEMPERATURES.map((temp) => {

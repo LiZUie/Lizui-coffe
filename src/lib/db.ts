@@ -104,7 +104,7 @@ export function getDb(): DatabaseSync {
   `);
 
   seedIfEmpty(db);
-  // Normalize legacy V60 Hot/Iced variants to Small/Large now that Coffee has its own temperature selector.
+  // Normalize legacy V60 Hot/Iced variants to Small/Large now that drinks have their own temperature selector.
   db.prepare(
     `UPDATE menu_items SET variants_json = ? WHERE id = 'menu-v60' AND variants_json LIKE '%"Hot"%'`,
   ).run(
@@ -113,6 +113,16 @@ export function getDb(): DatabaseSync {
       { label: "Large", priceDelta: 6000 },
     ]),
   );
+  db.prepare(
+    `UPDATE menu_items
+     SET name = 'Black Tea',
+         category = 'NON_COFFEE',
+         description = 'Teh hitam pilihan diseduh segar, nikmat disajikan hangat atau dingin.'
+     WHERE id = 'menu-v60' AND name = 'V60 Manual Brew'`,
+  ).run();
+  db.prepare(
+    `UPDATE order_items SET item_name = 'Black Tea' WHERE menu_item_id = 'menu-v60' AND item_name = 'V60 Manual Brew'`,
+  ).run();
 
   cachedDb = db;
   cachedDbPath = dbPath;
@@ -162,9 +172,9 @@ function seedIfEmpty(db: DatabaseSync): void {
       },
       {
         id: "menu-v60",
-        name: "V60 Manual Brew",
-        category: "COFFEE",
-        description: "Seduhan manual single-origin Gayo dengan karakter bersih dan floral.",
+        name: "Black Tea",
+        category: "NON_COFFEE",
+        description: "Teh hitam pilihan diseduh segar, nikmat disajikan hangat atau dingin.",
         price: 32000,
         visualKey: "v60",
         variants: [
@@ -388,7 +398,7 @@ function seedHistoricalOrders(db: DatabaseSync): void {
       status: "COMPLETED",
       items: [
         { menuId: "menu-cappucino", name: "Cappucino", variant: "Small", qty: 2, unitPrice: 28000 },
-        { menuId: "menu-v60", name: "V60 Manual Brew", variant: "Hot", qty: 1, unitPrice: 32000 },
+        { menuId: "menu-v60", name: "Black Tea", variant: "Hot", qty: 1, unitPrice: 32000 },
       ],
     },
     {
@@ -511,7 +521,7 @@ export function createMenuItem(input: {
     id,
     name,
     input.category,
-    input.description.trim() || "Menu racikan terbaru Purr'Coffee.",
+    input.description.trim() || "Menu racikan terbaru Lizui Coffee.",
     Math.round(input.price),
     visualKey,
     JSON.stringify(variants),

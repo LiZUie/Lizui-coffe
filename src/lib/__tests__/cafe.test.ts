@@ -104,7 +104,7 @@ describe("Cafe POS & Ordering Domain", () => {
     expect(summary.topMenus[0]?.quantitySold).toBeGreaterThanOrEqual(3);
 
     const csv = buildOrdersCsv(summary);
-    expect(csv).toContain("LAPORAN PENJUALAN PURR'COFFEE");
+    expect(csv).toContain("LAPORAN PENJUALAN LIZUI COFFEE");
     expect(csv).toContain("'=SUM(1,2)");
     expect(csv).toContain("'=FormulaDrink");
   });
@@ -173,6 +173,11 @@ describe("Cafe POS & Ordering Domain", () => {
     expect(resolveMenuImageSrc("iced-latte", "Panas")).toBe("/images/menu/iced-latte-hot.jpg");
     expect(resolveMenuImageSrc("coffee-latte", "Panas")).toBe("/images/menu/coffee-latte-hot.jpg");
     expect(resolveMenuImageSrc("americano", "Ice")).toBe("/images/menu/americano.jpg");
+    expect(resolveMenuImageSrc("americano", "Panas")).toBe("/images/menu/americano-hot.jpg");
+    expect(resolveMenuImageSrc("v60", "Ice")).toBe("/images/menu/v60.jpg");
+    expect(resolveMenuImageSrc("v60", "Panas")).toBe("/images/menu/v60-hot.jpg");
+    expect(resolveMenuImageSrc("chocolate", "Ice")).toBe("/images/menu/chocolate.jpg");
+    expect(resolveMenuImageSrc("chocolate", "Panas")).toBe("/images/menu/chocolate-hot.jpg");
     expect(resolveMenuImageSrc("/api/menu/image/123e4567-e89b-12d3-a456-426614174000.png")).toBe(
       "/api/menu/image/123e4567-e89b-12d3-a456-426614174000.png",
     );

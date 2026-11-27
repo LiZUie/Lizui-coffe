@@ -16,6 +16,15 @@ export function isTeaMenu(name: string): boolean {
   return /\b(teh|tea)\b/i.test(name);
 }
 
+export function hasTemperatureOption(
+  menu: Pick<MenuItem, "category" | "name"> & { visualKey?: string },
+): boolean {
+  if (isCoffeeCategory(menu.category)) return true;
+  if (isTeaMenu(menu.name)) return true;
+  if (/\b(chocolate|cokelat)\b/i.test(menu.name)) return true;
+  return menu.visualKey === "v60" || menu.visualKey === "chocolate";
+}
+
 export function getSugarExtraPrice(menu: Pick<MenuItem, "category" | "name">, sugarLevel: SugarLevel): number {
   if (!isDrinkCategory(menu.category)) return 0;
   if (sugarLevel !== "Banyak") return 0;
@@ -65,7 +74,9 @@ export function computeConfiguredUnitPrice(
     ? opts.temperature === "Panas"
       ? "Panas"
       : "Ice"
-    : undefined;
+    : hasTemperatureOption(menu) && (opts.temperature === "Panas" || opts.temperature === "Ice")
+      ? opts.temperature
+      : undefined;
 
   const parts = [baseLabel];
   if (temperature) parts.push(temperature);

@@ -9,7 +9,7 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Purr'Coffee | Pemesanan Meja, Kasir POS, & Monitoring Kafe",
+  title: "Lizui Coffee | Pemesanan Meja, Kasir POS, & Monitoring Kafe",
   description: "Sistem pemesanan pelanggan meja dan bawa pulang, kasir outlet, serta dashboard monitoring kafe.",
 };
 

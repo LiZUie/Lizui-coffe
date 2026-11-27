@@ -38,7 +38,7 @@ export function AppShell({
       <header className="no-print sticky top-0 z-30 border-b border-[#DDD5CD] bg-[#FFFFFF] lg:hidden">
         <div className="flex items-center justify-between px-4 py-3">
           <Link href="/" className="text-lg font-bold tracking-tight text-[#1F1B18]">
-            Purr&apos;<span className="text-[#B8551E]">Coffee</span>
+            Lizui <span className="text-[#B8551E]">Coffee</span>
           </Link>
           <div className="flex items-center gap-2">
             {staffRoleLabel && onLogoutStaff ? (
@@ -81,7 +81,7 @@ export function AppShell({
         <aside className="no-print hidden w-60 shrink-0 flex-col justify-between border-r border-[#DDD5CD] bg-[#FFFFFF] px-5 py-7 lg:sticky lg:top-0 lg:flex lg:h-screen">
           <div>
             <Link href="/" className="mb-8 block text-2xl font-bold tracking-tight text-[#1F1B18]">
-              Purr&apos;<span className="text-[#B8551E]">Coffee</span>
+              Lizui <span className="text-[#B8551E]">Coffee</span>
             </Link>
 
             <nav aria-label="Navigasi peran" className="space-y-2">

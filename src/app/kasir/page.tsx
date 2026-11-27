@@ -595,7 +595,7 @@ export default function CashierPage() {
         >
           <div className="mx-auto w-full max-w-sm rounded-2xl bg-[#FFFFFF] p-6 print:max-w-[320px] print:rounded-none print:border print:border-[#DDD5CD] print:p-5">
             <div className="text-center">
-              <h2 className="text-lg font-bold text-[#1F1B18]">Purr&apos;Coffee</h2>
+              <h2 className="text-lg font-bold text-[#1F1B18]">Lizui Coffee</h2>
               <p className="text-xs text-[#5E5650]">Struk Transaksi • {receiptOrder.orderNumber}</p>
               <p className="mt-1 text-xs text-[#5E5650]">{formatDateTimeShort(receiptOrder.createdAt)}</p>
             </div>
@@ -653,7 +653,7 @@ export default function CashierPage() {
             </div>
 
             <div className="mt-4 border-t border-dashed border-[#DDD5CD] pt-3 text-center text-xs text-[#5E5650]">
-              Terima kasih telah berkunjung ke Purr&apos;Coffee
+              Terima kasih telah berkunjung ke Lizui Coffee
             </div>
 
             <div className="no-print mt-5 flex gap-2">
